@@ -2,7 +2,7 @@ import React from 'react'
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Mail, Lock, Loader } from "lucide-react"
-import {Link} from "react-router-dom"
+import {Link, useNavigate} from "react-router-dom"
 import Input from '../components/input'
 import { useAuthStore } from '../store/authStore'
 
@@ -12,11 +12,36 @@ const LoginPage = () => {
 
   const { login, isLoading, error} = useAuthStore();
 
+
+  // OLD CODE
+  // const handleLogin = async (e) => {
+  //   e.preventDefault();
+
+  //   await login (email, password);
+  // }
+
+  // NEW CODE
+
+  // inside your component
+  const navigate = useNavigate();
+
   const handleLogin = async (e) => {
     e.preventDefault();
+  
+    const user = await login(email, password); // ✅ now returns user
+  
+    if (user) {
+      if (user.role === "superadmin") {
+        navigate("/superadmin-dashboard");
+      } else if (user.role === "admin") {
+        navigate("/admin-dashboard");
+      } else {
+        navigate("/");
+      }
+    }
+  };
+  
 
-    await login (email, password);
-  }
   return (
     <motion.div
     initial={{opacity: 0, y:20}}

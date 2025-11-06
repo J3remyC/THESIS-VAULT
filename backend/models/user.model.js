@@ -8,7 +8,7 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        require: true
+        required: true
     },
     name: {
         type: String,
@@ -22,10 +22,15 @@ const userSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    role: {
+        type: String,
+        enum: ["guest", "student", "admin", "superadmin"],
+        default: "guest"
+    },
     resetPasswordToken: String,
     resetPasswordExpiresAt: Date,
     verificationToken: String,
     verificationTokenExpiresAt: Date,
-}, {timestamps: true});
+}, { timestamps: true });
 
-export const User = mongoose.model("User", userSchema)
+export const User = mongoose.model("User", userSchema);

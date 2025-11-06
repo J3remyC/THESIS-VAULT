@@ -25,6 +25,7 @@ export const signup = async (req, res) => {
             email,
             password: hashedPassword,
             name,
+            role: "guest",
             verificationToken,
             verificationTokenExpiresAt: Date.now() + 24 * 60 * 60 * 1000 //24 Hours
         })
@@ -128,42 +129,38 @@ export const verifyEmail = async (req, res) => {
 }
 
 export const login = async (req, res) => {
-    const {email, password} = req.body;
+    const { email, password } = req.body;
     try {
-        const user = await User.findOne({email});
-        if(!user){
-            return res.status(400).json({
-                success: false,
-                message: "Invalid Credentials"
-            })
-        }
-        const isPasswordValid = await bcryptjs.compare(password, user.password);
-        if (!isPasswordValid){
-            return res.status(400).json({
-                success: false,
-                message: "Invalid Credentials"
-            });
-        }
-
-        generateTokenAndSetCookie(res, user._id);
-        user.lastLogin = new Date();
-        await user.save();
-
-        res.status(200).json({
-            success: true,
-            message: "Logged in succesfully",
-            user: {
-                ...user._doc,
-                password: undefined
-            },
-        })
+      const user = await User.findOne({ email });
+      if (!user) {
+        return res.status(400).json({ success: false, message: "Invalid Credentials" });
+      }
+  
+      const isPasswordValid = await bcryptjs.compare(password, user.password);
+      if (!isPasswordValid) {
+        return res.status(400).json({ success: false, message: "Invalid Credentials" });
+      }
+  
+      // Generate token
+      const token = generateTokenAndSetCookie(res, user._id); // make sure this function returns the token string
+      user.lastLogin = new Date();
+      await user.save();
+  
+      res.status(200).json({
+        success: true,
+        message: "Logged in successfully",
+        token, // <-- include JWT here
+        user: {
+          ...user._doc,
+          role: user.role,
+          password: undefined,
+        },
+      });
     } catch (error) {
-        return res.status(400).json({
-            success: false,
-            message: "Error logging in"
-        });    
+      return res.status(400).json({ success: false, message: "Error logging in" });
     }
-}
+  };
+  
 export const logout = async (req, res) => {
     res.clearCookie("token");
     res.status(200).json({
@@ -245,15 +242,17 @@ export const resetPassword = async (req, res) => {
 
 export const checkAuth = async (req, res) => {
     try {
-        const user = await User.findById(req.userId).select("-password")
-        if(!user){
-            return res.status(400).json({success: false, message: "User not found"})
-        }
-        res.status(200).json({
-            success: true,
-            user
-        })
+      const user = await User.findById(req.userId).select("-password");
+      if (!user) {
+        return res.status(400).json({ success: false, message: "User not found" });
+      }
+      res.status(200).json({
+        success: true,
+        user
+      });
     } catch (error) {
-        console.log("Error in checkauth", error)
+      console.log("Error in checkauth", error);
+      res.status(500).json({ success: false, message: "Server error" });
     }
-}
+  };
+  
