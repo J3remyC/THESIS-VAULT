@@ -21,34 +21,34 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: "No file uploaded" });
 
+    const { title, author, course, yearPublished } = req.body;
+
     const fileBase64 = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
     const result = await cloudinary.uploader.upload(fileBase64, {
       folder: "uploads",
       resource_type: "auto",
     });
 
-    // ✅ Save uploader info in MongoDB
     const newFile = await File.create({
       url: result.secure_url,
       filename: req.file.originalname,
-      uploadedBy: req.user._id, // Link uploader
+      uploadedBy: req.user._id,
+      title,
+      author,
+      course,
+      yearPublished,
     });
 
     res.status(200).json({
       message: "File uploaded successfully",
-      file: {
-        ...newFile.toObject(),
-        uploader: {
-          name: req.user.name,
-          email: req.user.email,
-        },
-      },
+      file: newFile,
     });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Upload failed" });
   }
 });
+
 
 // ✅ Fetch files and include uploader info
 router.get("/", async (req, res) => {

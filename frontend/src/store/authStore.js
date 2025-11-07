@@ -102,11 +102,13 @@ export const useAuthStore = create((set) => ({
     }
   },
 
-  uploadFile: async (file) => {
-    // For Cloudinary uploads
+  uploadFile: async (file, metadata = {}) => {
     const formData = new FormData();
     formData.append("file", file);
-
+    Object.entries(metadata).forEach(([key, value]) => {
+      formData.append(key, value);
+    });
+  
     try {
       const response = await api.post("/upload", formData, {
         headers: { "Content-Type": "multipart/form-data" },
@@ -117,4 +119,5 @@ export const useAuthStore = create((set) => ({
       throw error;
     }
   },
+  
 }));
