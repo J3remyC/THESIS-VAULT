@@ -4,7 +4,7 @@ import { useAuthStore } from '../store/authStore';
 import { formatDate } from '../utils/date.js';
 
 const DashBoardPage = () => {
-  const { user, logout } = useAuthStore();
+  const { user, logout, uploadFile } = useAuthStore();
   const [file, setFile] = useState(null);
   const [uploadedURL, setUploadedURL] = useState('');
   const [loading, setLoading] = useState(false);
@@ -12,38 +12,36 @@ const DashBoardPage = () => {
 
   const handleLogout = () => logout();
 
+  // Fetch files from backend
+  const fetchFiles = async () => {
+    try {
+      const res = await fetch('http://localhost:3000/api/upload');
+      const data = await res.json();
+
+      // Filter out any files with missing URLs (deleted assets)
+      const validFiles = data.filter((f) => f.url);
+      setFiles(validFiles);
+    } catch (error) {
+      console.error('Failed to fetch files:', error);
+    }
+  };
+
   useEffect(() => {
     fetchFiles();
   }, []);
 
-  const fetchFiles = async () => {
-    try {
-      const res = await fetch("http://localhost:3000/api/upload");
-      const data = await res.json();
-      setFiles(data);
-    } catch (error) {
-      console.error("Failed to fetch files:", error);
-    }
-  };
-
+  // Handle file upload using authStore's uploadFile
   const handleUpload = async (e) => {
     e.preventDefault();
     if (!file) return alert('Please choose a file first.');
 
     setLoading(true);
-    const formData = new FormData();
-    formData.append('file', file);
-
     try {
-      const res = await fetch('http://localhost:3000/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await res.json();
+      const data = await uploadFile(file); // calls store method
       setUploadedURL(data.url);
       setLoading(false);
       fetchFiles(); // Refresh file list after upload
+      setFile(null); // reset file input
     } catch (error) {
       console.error('Upload failed:', error);
       alert('Upload failed. Check your backend connection.');
@@ -63,8 +61,8 @@ const DashBoardPage = () => {
         Dashboard
       </h2>
 
-      {/* Profile Information */}
       <div className="space-y-6">
+        {/* Profile Info */}
         <motion.div
           className="p-4 bg-gray-800 bg-opacity-50 rounded-lg border border-gray-700"
           initial={{ opacity: 0, y: 20 }}
@@ -98,7 +96,7 @@ const DashBoardPage = () => {
           </p>
         </motion.div>
 
-        {/* File Upload Section */}
+        {/* File Upload */}
         <motion.div
           className="p-4 bg-gray-800 bg-opacity-50 rounded-lg border border-gray-700"
           initial={{ opacity: 0, y: 20 }}
@@ -142,40 +140,41 @@ const DashBoardPage = () => {
           )}
         </motion.div>
 
-        {/* Uploaded Files Grid */}
+        {/* Files Grid */}
         <motion.div
           className="p-4 bg-gray-800 bg-opacity-50 rounded-lg border border-gray-700"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8 }}
         >
+          
           <h3 className="text-xl font-semibold text-green-400 mb-4">Uploaded Files</h3>
-          {files.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {files.map((f, i) => (
-                <div
-                  key={i}
-                  className="p-4 bg-gray-700 bg-opacity-60 rounded-lg shadow-md hover:shadow-green-500/20 transition-shadow"
-                >
-                  <p className="text-gray-200 truncate mb-2">{f.originalName || 'Unnamed File'}</p>
-                  <a
-                    href={f.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-emerald-400 hover:text-emerald-300 underline text-sm"
-                  >
-                    View / Download
-                  </a>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-gray-400 text-center">No files uploaded yet.</p>
-          )}
+          {files.map((f, i) => (
+          <div
+            key={i}
+            className="mb-2 p-4 bg-gray-700 bg-opacity-60 rounded-lg shadow-md hover:shadow-green-500/20 transition-shadow"
+          >
+            <p className="text-gray-200 truncate mb-1">{f.filename}</p>
+            <p className="text-gray-400 text-sm mb-1">
+              Uploaded by: {f.uploadedBy?.name || "Unknown"}
+            </p>
+            <p className="text-gray-500 text-xs mb-2">{f.uploadedBy?.email}</p>
+            <a
+              href={f.url}
+              target="_blank"
+              rel="noreferrer"
+              className="text-emerald-400 hover:text-emerald-300 underline text-sm"
+            >
+              View / Download
+            </a>
+          </div>
+        ))}
+
+                  
         </motion.div>
       </div>
 
-      {/* Logout Button */}
+      {/* Logout */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
