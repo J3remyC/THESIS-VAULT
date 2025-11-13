@@ -7,6 +7,13 @@ const fileSchema = new mongoose.Schema({
   author: { type: String },
   course: { type: String },
   yearPublished: { type: Number },
+  department: { type: String },
+  status: {
+    type: String,
+    enum: ["pending", "approved", "rejected"],
+    default: "pending",
+    index: true,
+  },
   uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   createdAt: { type: Date, default: Date.now },
 });
