@@ -3,8 +3,12 @@ import LoginPage from "./pages/LoginPage"
 import SignUpPage from "./pages/SignUpPage"
 import EmailVerificationPage from "./pages/EmailVerificationPage"
 import SuperadminDashboardPage from "./pages/SuperadminDashboardPage"
-import AdminLayout from "./pages/admin/AdminLayout"
-import AdminOverview from "./pages/admin/AdminOverview"
+import AdminLayout from "./pages/admin/AdminLayout";
+import ActivityLogs from "./pages/admin/ActivityLogs";
+import AllTheses from "./pages/AllTheses";
+import UploadThesis from "./pages/UploadThesis";
+import AdminOverview from "./pages/admin/AdminOverview";
+import Overview from "./pages/Overview";
 import UsersList from "./pages/admin/UsersList"
 import UserAdd from "./pages/admin/UserAdd"
 import ManageRoles from "./pages/admin/ManageRoles"
@@ -12,7 +16,6 @@ import ThesesAll from "./pages/admin/ThesesAll"
 import ThesesPending from "./pages/admin/ThesesPending"
 import Departments from "./pages/admin/Departments"
 import DepartmentTheses from "./pages/admin/DepartmentTheses"
-import ActivityLogs from "./pages/admin/ActivityLogs"
 import DashBoardPage from "./pages/DashBoardPage"
 import { Toaster } from "react-hot-toast"
 import { Route, Routes, Navigate } from "react-router-dom"
@@ -67,8 +70,32 @@ function App() {
         <Route
           path="/"
           element={
+            <ProtectedRoute allowedRoles={["guest", "student", "admin", "superadmin"]}>
+              <Overview />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
             <ProtectedRoute allowedRoles={["guest", "student"]}>
               <DashBoardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/theses"
+          element={
+            <ProtectedRoute allowedRoles={["guest", "student", "admin", "superadmin"]}>
+              <AllTheses />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/upload"
+          element={
+            <ProtectedRoute allowedRoles={["student"]}>
+              <UploadThesis />
             </ProtectedRoute>
           }
         />

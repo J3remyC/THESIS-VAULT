@@ -4,7 +4,9 @@ import { v2 as cloudinary } from "cloudinary";
 import dotenv from "dotenv";
 import { File } from "../models/file.model.js";
 import { Department } from "../models/department.model.js";
+import { ActivityLog } from "../models/activityLog.model.js";
 import { verifyToken } from "../middleware/authMiddleware.js";
+import { authorizeRoles } from "../middleware/roleMiddleware.js";
 
 dotenv.config();
 const router = express.Router();
@@ -18,11 +20,11 @@ cloudinary.config({
 });
 
 // ✅ Secure file upload route
-router.post("/", verifyToken, upload.single("file"), async (req, res) => {
+router.post("/", verifyToken, authorizeRoles("student", "admin", "superadmin"), upload.single("file"), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: "No file uploaded" });
 
-    const { title, author, course, yearPublished, department } = req.body;
+    const { title, author, course, yearPublished, department, description } = req.body;
 
     // Validate department (expecting department code)
     if (!department) return res.status(400).json({ message: "Department code is required" });
@@ -40,10 +42,18 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
       filename: req.file.originalname,
       uploadedBy: req.user._id,
       title,
+      description,
       author,
       course,
       yearPublished,
       department, // store department code for now
+    });
+
+    // Log user upload
+    await ActivityLog.create({
+      actor: req.user._id,
+      action: "UPLOAD_THESIS",
+      details: { fileId: newFile._id, title: newFile.title },
     });
 
     res.status(200).json({
@@ -53,6 +63,37 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Upload failed" });
+  }
+});
+
+// ✅ Vote on a thesis (up or down)
+router.post("/:id/vote", verifyToken, async (req, res) => {
+  try {
+    const { type } = req.body; // 'up' or 'down'
+    if (!['up','down'].includes(type)) return res.status(400).json({ message: 'Invalid vote type' });
+    const file = await File.findById(req.params.id);
+    if (!file) return res.status(404).json({ message: 'Not found' });
+
+    const uid = String(req.user._id);
+    const upSet = new Set(file.upvoters.map(String));
+    const downSet = new Set(file.downvoters.map(String));
+
+    // Remove from both first (toggle behavior)
+    upSet.delete(uid);
+    downSet.delete(uid);
+
+    if (type === 'up') upSet.add(uid);
+    else downSet.add(uid);
+
+    file.upvoters = Array.from(upSet);
+    file.downvoters = Array.from(downSet);
+    file.upvotes = file.upvoters.length;
+    file.downvotes = file.downvoters.length;
+    await file.save();
+
+    return res.json(file);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to vote' });
   }
 });
 
@@ -79,6 +120,69 @@ router.get("/mine", verifyToken, async (req, res) => {
     res.status(200).json(files);
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch user's files" });
+  }
+});
+
+// ✅ Update own upload (metadata only)
+router.patch("/:id", verifyToken, async (req, res) => {
+  try {
+    const file = await File.findById(req.params.id);
+    if (!file) return res.status(404).json({ message: "Not found" });
+    if (String(file.uploadedBy) !== String(req.user._id)) return res.status(403).json({ message: "Forbidden" });
+
+    const updates = {};
+    const { title, author, course, yearPublished, department, description } = req.body;
+    if (title !== undefined) updates.title = title;
+    if (description !== undefined) updates.description = description;
+    if (author !== undefined) updates.author = author;
+    if (course !== undefined) updates.course = course;
+    if (yearPublished !== undefined) updates.yearPublished = yearPublished;
+    if (department !== undefined) {
+      const dep = await Department.findOne({ code: department });
+      if (!dep) return res.status(400).json({ message: "Invalid department code" });
+      updates.department = department;
+    }
+
+    const updated = await File.findByIdAndUpdate(req.params.id, updates, { new: true });
+    await ActivityLog.create({
+      actor: req.user._id,
+      action: "EDIT_THESIS",
+      details: { fileId: updated._id, updates },
+    });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to update file" });
+  }
+});
+
+// ✅ Delete own upload
+router.delete("/:id", verifyToken, async (req, res) => {
+  try {
+    const file = await File.findById(req.params.id);
+    if (!file) return res.status(404).json({ message: "Not found" });
+    if (String(file.uploadedBy) !== String(req.user._id)) return res.status(403).json({ message: "Forbidden" });
+
+    await File.findByIdAndDelete(req.params.id);
+    await ActivityLog.create({
+      actor: req.user._id,
+      action: "DELETE_THESIS",
+      details: { fileId: req.params.id, title: file.title },
+    });
+    res.json({ message: "Deleted" });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to delete file" });
+  }
+});
+
+// ✅ User's own activity logs
+router.get("/logs/mine", verifyToken, async (req, res) => {
+  try {
+    const logs = await ActivityLog.find({ actor: req.user._id })
+      .sort({ createdAt: -1 })
+      .limit(200);
+    res.json(logs);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch logs" });
   }
 });
 

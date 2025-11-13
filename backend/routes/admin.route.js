@@ -95,16 +95,17 @@ router.patch(
   authorizeRoles("admin", "superadmin"),
   async (req, res) => {
     try {
+      const reason = (req.body && (req.body.reason || req.body.rejectionReason)) || "";
       const file = await File.findByIdAndUpdate(
         req.params.id,
-        { status: "rejected" },
+        { status: "rejected", rejectionReason: reason },
         { new: true }
       );
       if (!file) return res.status(404).json({ message: "Not found" });
       await ActivityLog.create({
         actor: req.user._id,
         action: "REJECT_THESIS",
-        details: { fileId: file._id },
+        details: { fileId: file._id, reason },
       });
       res.json(file);
     } catch (e) {
@@ -149,7 +150,8 @@ router.get(
         .populate("actor", "name email role")
         .sort({ createdAt: -1 })
         .limit(200);
-      res.json(logs);
+      const adminOnly = logs.filter((l) => l.actor && ["admin", "superadmin"].includes(l.actor.role));
+      res.json(adminOnly);
     } catch (e) {
       res.status(500).json({ message: "Failed to fetch logs" });
     }

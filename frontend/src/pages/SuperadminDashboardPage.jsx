@@ -41,7 +41,14 @@ const SuperadminDashboardPage = () => {
     loadAll()
   }
   const reject = async (id) => {
-    await fetch(`http://localhost:3000/api/admin/theses/${id}/reject`, { method: 'PATCH', headers: authHeaders(), credentials: 'include' })
+    const reason = window.prompt('Enter rejection reason (optional):', '') || '';
+    const headers = authHeaders();
+    await fetch(`http://localhost:3000/api/admin/theses/${id}/reject`, {
+      method: 'PATCH',
+      headers,
+      credentials: 'include',
+      body: JSON.stringify({ reason }),
+    })
     loadAll()
   }
 
