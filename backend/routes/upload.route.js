@@ -2,6 +2,8 @@ import express from "express";
 import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
 import dotenv from "dotenv";
+import path from "path";
+import { Readable } from "stream";
 import { File } from "../models/file.model.js";
 import { Department } from "../models/department.model.js";
 import { ActivityLog } from "../models/activityLog.model.js";
@@ -35,11 +37,17 @@ router.post("/", verifyToken, authorizeRoles("student", "admin", "superadmin"), 
     const result = await cloudinary.uploader.upload(fileBase64, {
       folder: "uploads",
       resource_type: "auto",
+      use_filename: true,
+      unique_filename: false,
+      filename_override: req.file.originalname,
     });
 
     const newFile = await File.create({
       url: result.secure_url,
       filename: req.file.originalname,
+      publicId: result.public_id,
+      resourceType: result.resource_type,
+      format: result.format,
       uploadedBy: req.user._id,
       title,
       description,
@@ -186,5 +194,43 @@ router.get("/logs/mine", verifyToken, async (req, res) => {
   }
 });
 
+// ✅ Download file
+router.get("/:id/download", async (req, res) => {
+  try {
+    const file = await File.findById(req.params.id);
+    if (!file) return res.status(404).json({ message: "Not found" });
+
+    const original = file.filename || "file";
+
+    // If we have a Cloudinary publicId, generate an attachment URL via SDK
+    if (file.publicId) {
+      const url = cloudinary.url(file.publicId, {
+        resource_type: file.resourceType || "auto",
+        flags: "attachment",
+        filename: original,
+        secure: true,
+      });
+      return res.redirect(302, url);
+    }
+
+    // Fallback: stream with explicit headers
+    const ext = path.extname(original).toLowerCase();
+    let mime = "application/octet-stream";
+    if (ext === ".pdf") mime = "application/pdf";
+    else if (ext === ".docx") mime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    else if (ext === ".doc") mime = "application/msword";
+
+    res.setHeader("Content-Type", mime);
+    res.setHeader("Content-Disposition", `attachment; filename="${original}"`);
+
+    const r = await fetch(file.url);
+    if (!r.ok || !r.body) return res.status(502).json({ message: "Upstream download failed" });
+    const nodeStream = typeof Readable.fromWeb === "function" && r.body?.getReader ? Readable.fromWeb(r.body) : r.body;
+    nodeStream.pipe(res);
+  } catch (err) {
+    console.error("Download error", err);
+    res.status(500).json({ message: "Failed to download" });
+  }
+});
 
 export default router;

@@ -3,6 +3,9 @@ import mongoose from "mongoose";
 const fileSchema = new mongoose.Schema({
   url: { type: String, required: true },
   filename: { type: String, required: true },
+  publicId: { type: String },
+  resourceType: { type: String },
+  format: { type: String },
   title: { type: String },
   description: { type: String },
   author: { type: String },

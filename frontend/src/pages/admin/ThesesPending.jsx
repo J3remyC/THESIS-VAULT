@@ -76,8 +76,8 @@ const ThesesPending = () => {
                       {selected.url && (
                         <a href={selected.url} target="_blank" rel="noreferrer" className="px-3 py-2 rounded bg-emerald-600 hover:bg-emerald-500 text-xs">View</a>
                       )}
-                      {selected.url && (
-                        <a href={selected.url} target="_blank" rel="noreferrer" download className="px-3 py-2 rounded bg-gray-700 hover:bg-gray-600 text-xs">Download</a>
+                      {selected && (
+                        <a href={`http://localhost:3000/api/upload/${selected._id}/download`} target="_blank" rel="noreferrer" download={selected.filename || undefined} className="px-3 py-2 rounded bg-gray-700 hover:bg-gray-600 text-xs">Download</a>
                       )}
                     </div>
                   </div>

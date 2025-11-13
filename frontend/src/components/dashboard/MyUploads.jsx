@@ -44,7 +44,7 @@ const MyUploads = ({ myFiles = [], onChanged }) => {
 
   return (
     <motion.div
-      className="p-4 bg-gray-900/60 rounded-lg border border-gray-800"
+      className="p-0"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.18 }}
