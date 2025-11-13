@@ -69,36 +69,32 @@ const AllTheses = () => {
                   </select>
                 </div>
               </div>
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-sm">
-                  <thead className="text-left text-gray-400 border-b border-gray-800">
-                    <tr>
-                      <th className="py-2 pr-4">Title</th>
-                      <th className="py-2 pr-4">Author</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {files
-                      .filter((f)=> !filterDept || (f.department === filterDept))
-                      .filter((f)=>{
-                        const q = search.trim().toLowerCase();
-                        if (!q) return true;
-                        return (
-                          (f.title||"").toLowerCase().includes(q) ||
-                          (f.author||"").toLowerCase().includes(q) ||
-                          (f.course||"").toLowerCase().includes(q)
-                        );
-                      })
-                      .map((f, i) => (
-                      <tr key={i} className="border-b border-gray-900/60 hover:bg-gray-900/40 cursor-pointer" onClick={()=>setSelected(f)}>
-                        <td className="py-2 pr-4">
-                          <div className="font-medium text-gray-200">{f.title}</div>
-                        </td>
-                        <td className="py-2 pr-4 text-gray-300">{f.author}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                {files
+                  .filter((f)=> !filterDept || (f.department === filterDept))
+                  .filter((f)=>{
+                    const q = search.trim().toLowerCase();
+                    if (!q) return true;
+                    return (
+                      (f.title||"").toLowerCase().includes(q) ||
+                      (f.author||"").toLowerCase().includes(q) ||
+                      (f.course||"").toLowerCase().includes(q)
+                    );
+                  })
+                  .map((f, i) => (
+                    <div
+                      key={i}
+                      className="p-4 rounded-lg border border-gray-800 bg-gray-900/60 hover:bg-gray-900/80 transition-colors cursor-pointer"
+                      onClick={()=>setSelected(f)}
+                    >
+                      <div className="font-medium text-gray-200 line-clamp-2">{f.title}</div>
+                      <div className="text-xs text-gray-400 mb-2">{f.author}</div>
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className="px-2 py-0.5 rounded bg-emerald-700/30 text-emerald-300">▲ {f.upvotes || 0}</span>
+                        <span className="px-2 py-0.5 rounded bg-gray-700/30 text-gray-300">▼ {f.downvotes || 0}</span>
+                      </div>
+                    </div>
+                ))}
               </div>
             </motion.div>
           </div>
