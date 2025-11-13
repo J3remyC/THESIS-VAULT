@@ -31,7 +31,9 @@ const LoginPage = () => {
     const user = await login(email, password); // ✅ now returns user
   
     if (user) {
-      if (user.role === "admin" || user.role === "superadmin") {
+      if (user.role === "superadmin") {
+        navigate("/superadmin-dashboard");
+      } else if (user.role === "admin") {
         navigate("/admin-dashboard");
       } else {
         navigate("/");

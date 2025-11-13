@@ -3,16 +3,7 @@ import LoginPage from "./pages/LoginPage"
 import SignUpPage from "./pages/SignUpPage"
 import EmailVerificationPage from "./pages/EmailVerificationPage"
 import SuperadminDashboardPage from "./pages/SuperadminDashboardPage"
-import AdminLayout from "./pages/admin/AdminLayout"
-import AdminOverview from "./pages/admin/AdminOverview"
-import UsersList from "./pages/admin/UsersList"
-import UserAdd from "./pages/admin/UserAdd"
-import ManageRoles from "./pages/admin/ManageRoles"
-import ThesesAll from "./pages/admin/ThesesAll"
-import ThesesPending from "./pages/admin/ThesesPending"
-import Departments from "./pages/admin/Departments"
-import DepartmentTheses from "./pages/admin/DepartmentTheses"
-import ActivityLogs from "./pages/admin/ActivityLogs"
+import AdminDashboardPage from "./pages/AdminDashboardPage"
 import DashBoardPage from "./pages/DashBoardPage"
 import { Toaster } from "react-hot-toast"
 import { Route, Routes, Navigate } from "react-router-dom"
@@ -42,15 +33,6 @@ const RedirectAuthenticatedUser = ({ children }) => {
   return children;
 };
 
-const AuthLayout = ({ children }) => (
-  <div className="min-h-screen bg-gradient-to-br from-gray-900 via-green-900 to-emerald-900 flex items-center justify-center relative overflow-hidden">
-    <FloatingShape color="bg-green-500" size="w-64 h-64" top="-5%" left="10%" delay={0} />
-    <FloatingShape color="bg-emerald-500" size="w-48 h-48" top="70%" left="80%" delay={5} />
-    <FloatingShape color="bg-lime-500" size="w-32 h-32" top="40%" left="10%" delay={2} />
-    {children}
-  </div>
-);
-
 function App() {
   const { isCheckingAuth, checkAuth } = useAuthStore();
 
@@ -61,7 +43,11 @@ function App() {
   if (isCheckingAuth) return <LoadingSpinner />;
 
   return (
-    <>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-green-900 to-emerald-900 flex items-center justify-center relative overflow-hidden">
+      <FloatingShape color="bg-green-500" size="w-64 h-64" top="-5%" left="10%" delay={0} />
+      <FloatingShape color="bg-emerald-500" size="w-48 h-48" top="70%" left="80%" delay={5} />
+      <FloatingShape color="bg-lime-500" size="w-32 h-32" top="40%" left="10%" delay={2} />
+
       <Routes>
         {/* 🧍 Regular Users */}
         <Route
@@ -73,32 +59,15 @@ function App() {
           }
         />
 
-        {/* 🛠️ Admin Dashboard (nested) */}
+        {/* 🛠️ Admin Dashboard */}
         <Route
           path="/admin-dashboard"
           element={
-            <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
-              <AdminLayout />
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminDashboardPage />
             </ProtectedRoute>
           }
-        >
-          <Route index element={<AdminOverview />} />
-          <Route path="users" element={<UsersList />} />
-          <Route path="users/new" element={<UserAdd />} />
-          <Route
-            path="manage-roles"
-            element={
-              <ProtectedRoute allowedRoles={["superadmin"]}>
-                <ManageRoles />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="theses" element={<ThesesAll />} />
-          <Route path="theses/pending" element={<ThesesPending />} />
-          <Route path="departments" element={<Departments />} />
-          <Route path="departments/theses" element={<DepartmentTheses />} />
-          <Route path="logs" element={<ActivityLogs />} />
-        </Route>
+        />
 
         {/* 👑 Superadmin Dashboard */}
         <Route
@@ -111,13 +80,13 @@ function App() {
         />
 
         {/* 🔑 Auth Routes */}
-        <Route path="/signup" element={<AuthLayout><RedirectAuthenticatedUser><SignUpPage /></RedirectAuthenticatedUser></AuthLayout>} />
-        <Route path="/login" element={<AuthLayout><RedirectAuthenticatedUser><LoginPage /></RedirectAuthenticatedUser></AuthLayout>} />
-        <Route path="/verify-email" element={<AuthLayout><EmailVerificationPage /></AuthLayout>} />
+        <Route path="/signup" element={<RedirectAuthenticatedUser><SignUpPage /></RedirectAuthenticatedUser>} />
+        <Route path="/login" element={<RedirectAuthenticatedUser><LoginPage /></RedirectAuthenticatedUser>} />
+        <Route path="/verify-email" element={<EmailVerificationPage />} />
       </Routes>
 
       <Toaster />
-    </>
+    </div>
   );
 }
 

@@ -3,7 +3,6 @@ import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
 import dotenv from "dotenv";
 import { File } from "../models/file.model.js";
-import { Department } from "../models/department.model.js";
 import { verifyToken } from "../middleware/authMiddleware.js";
 
 dotenv.config();
@@ -22,12 +21,7 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: "No file uploaded" });
 
-    const { title, author, course, yearPublished, department } = req.body;
-
-    // Validate department (expecting department code)
-    if (!department) return res.status(400).json({ message: "Department code is required" });
-    const dep = await Department.findOne({ code: department });
-    if (!dep) return res.status(400).json({ message: "Invalid department code" });
+    const { title, author, course, yearPublished } = req.body;
 
     const fileBase64 = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
     const result = await cloudinary.uploader.upload(fileBase64, {
@@ -43,7 +37,6 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
       author,
       course,
       yearPublished,
-      department, // store department code for now
     });
 
     res.status(200).json({
@@ -58,27 +51,14 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
 
 
 // ✅ Fetch files and include uploader info
-// Public list: only approved files
 router.get("/", async (req, res) => {
   try {
-    const files = await File.find({ status: "approved" })
-      .populate("uploadedBy", "name email")
+    const files = await File.find()
+      .populate("uploadedBy", "name email") // 👈 this adds name and email
       .sort({ createdAt: -1 });
     res.status(200).json(files);
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch files" });
-  }
-});
-
-// Authenticated list of own uploads (any status)
-router.get("/mine", verifyToken, async (req, res) => {
-  try {
-    const files = await File.find({ uploadedBy: req.user._id })
-      .populate("uploadedBy", "name email")
-      .sort({ createdAt: -1 });
-    res.status(200).json(files);
-  } catch (err) {
-    res.status(500).json({ message: "Failed to fetch user's files" });
   }
 });
 
