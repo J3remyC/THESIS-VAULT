@@ -112,6 +112,14 @@ export const useAuthStore = create((set) => ({
     try {
       const response = await api.post("/upload", formData, {
         headers: { "Content-Type": "multipart/form-data" },
+        onUploadProgress: (evt) => {
+          const total = evt.total || 0;
+          const loaded = evt.loaded || 0;
+          const percent = total ? Math.round((loaded * 100) / total) : 0;
+          if (typeof metadata.onProgress === "function") {
+            metadata.onProgress(percent);
+          }
+        },
       });
       return response.data;
     } catch (error) {
