@@ -378,14 +378,37 @@ router.get(
   "/logs",
   verifyToken,
   authorizeRoles("admin", "superadmin"),
-  async (_req, res) => {
+  async (req, res) => {
     try {
-      const logs = await ActivityLog.find()
-        .populate("actor", "name email role")
-        .sort({ createdAt: -1 })
-        .limit(200);
-      const adminOnly = logs.filter((l) => l.actor && ["admin", "superadmin"].includes(l.actor.role));
-      res.json(adminOnly);
+      const page = Math.max(parseInt(req.query.page || "1", 10), 1);
+      const limit = Math.min(Math.max(parseInt(req.query.limit || "20", 10), 1), 100);
+      const skip = (page - 1) * limit;
+      const adminUsers = await User.find({ role: { $in: ["admin", "superadmin"] } }).select("_id");
+      const adminIds = adminUsers.map((u) => u._id);
+      const filter = { actor: { $in: adminIds } };
+      const [total, logs] = await Promise.all([
+        ActivityLog.countDocuments(filter),
+        ActivityLog.find(filter)
+          .populate("actor", "name email role")
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit),
+      ]);
+      const items = logs.map((l) => {
+        let detailText = "";
+        const d = l.details || {};
+        if (l.action === "APPROVE_THESIS") detailText = `Approved thesis ${d.fileId || ""}`;
+        else if (l.action === "REJECT_THESIS") detailText = `Rejected thesis ${d.fileId || ""}${d.reason ? `, reason: ${d.reason}` : ""}`;
+        else if (l.action === "UPDATE_THESIS") detailText = `Updated thesis ${d.fileId || ""}`;
+        else if (l.action === "TRASH_THESIS") detailText = `Moved thesis ${d.fileId || ""} to trash`;
+        else if (l.action === "RESTORE_THESIS") detailText = `Restored thesis ${d.fileId || ""} from trash`;
+        else if (l.action === "PURGE_THESIS") detailText = `Permanently deleted thesis ${d.fileId || ""}`;
+        else if (l.action === "APP_APPROVE") detailText = `Approved application ${d.applicationId || ""}`;
+        else if (l.action === "APP_REJECT") detailText = `Rejected application ${d.applicationId || ""}${d.reason ? `, reason: ${d.reason}` : ""}`;
+        return { ...l.toObject(), detailText };
+      });
+      const totalPages = Math.max(Math.ceil(total / limit), 1);
+      res.json({ items, page, limit, total, totalPages });
     } catch (e) {
       res.status(500).json({ message: "Failed to fetch logs" });
     }
