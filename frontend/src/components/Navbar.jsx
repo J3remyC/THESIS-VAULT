@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { useAuthStore } from "../store/authStore";
+import { Link } from "react-router-dom";
 
 const Navbar = () => {
   const { user, logout } = useAuthStore();
@@ -26,9 +27,9 @@ const Navbar = () => {
               <div className="px-3 py-2 text-xs text-gray-400">Signed in as</div>
               <div className="px-3 pb-2 text-sm text-gray-200 truncate">{user?.email}</div>
               <div className="h-px bg-gray-700" />
-              <a href="#/account" className="block px-3 py-2 text-sm text-gray-200 hover:bg-gray-700">
+              <Link to="/account" className="block px-3 py-2 text-sm text-gray-200 hover:bg-gray-700" onClick={()=>setOpen(false)}>
                 Account settings
-              </a>
+              </Link>
               <button
                 onClick={logout}
                 className="w-full text-left px-3 py-2 text-sm text-red-300 hover:bg-gray-700"

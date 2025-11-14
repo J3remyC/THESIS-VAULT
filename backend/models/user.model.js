@@ -22,6 +22,17 @@ const userSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    isBanned: {
+        type: Boolean,
+        default: false
+    },
+    banReason: {
+        type: String,
+        default: ""
+    },
+    bannedAt: {
+        type: Date
+    },
     role: {
         type: String,
         enum: ["guest", "student", "admin", "superadmin"],

@@ -14,6 +14,8 @@ import UserAdd from "./pages/admin/UserAdd"
 import ManageRoles from "./pages/admin/ManageRoles"
 import ThesesAll from "./pages/admin/ThesesAll"
 import ThesesPending from "./pages/admin/ThesesPending"
+import ThesesTrash from "./pages/admin/ThesesTrash"
+import Applications from "./pages/admin/Applications"
 import Departments from "./pages/admin/Departments"
 import DepartmentTheses from "./pages/admin/DepartmentTheses"
 import DashBoardPage from "./pages/DashBoardPage"
@@ -22,6 +24,8 @@ import { Route, Routes, Navigate } from "react-router-dom"
 import { useAuthStore } from "./store/authStore"
 import { useEffect } from "react"
 import LoadingSpinner from "./components/LoadingSpinner"
+import AccountSettings from "./pages/AccountSettings"
+import BannedOverlay from "./components/BannedOverlay"
 
 // ✅ PROTECTED ROUTE COMPONENT
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -55,7 +59,7 @@ const AuthLayout = ({ children }) => (
 );
 
 function App() {
-  const { isCheckingAuth, checkAuth } = useAuthStore();
+  const { isCheckingAuth, checkAuth, user } = useAuthStore();
 
   useEffect(() => {
     checkAuth();
@@ -65,6 +69,8 @@ function App() {
 
   return (
     <>
+      <Toaster position="top-right" />
+      {user && user.isBanned && <BannedOverlay />}
       <Routes>
         {/* 🧍 Regular Users */}
         <Route
@@ -80,6 +86,14 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={["guest", "student"]}>
               <DashBoardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/account"
+          element={
+            <ProtectedRoute allowedRoles={["guest", "student", "admin", "superadmin"]}>
+              <AccountSettings />
             </ProtectedRoute>
           }
         />
@@ -122,6 +136,8 @@ function App() {
           />
           <Route path="theses" element={<ThesesAll />} />
           <Route path="theses/pending" element={<ThesesPending />} />
+          <Route path="theses/trash" element={<ThesesTrash />} />
+          <Route path="applications" element={<Applications />} />
           <Route path="departments" element={<Departments />} />
           <Route path="departments/theses" element={<DepartmentTheses />} />
           <Route path="logs" element={<ActivityLogs />} />

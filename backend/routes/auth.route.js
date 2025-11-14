@@ -11,7 +11,7 @@ import {
 
 
 
-import { verifyToken } from "../middleware/verifyToken.js";
+import { verifyToken, verifyTokenAllowBanned } from "../middleware/verifyToken.js";
 import { checkRole } from "../middleware/checkRole.js";
 
 const router = express.Router();
@@ -27,8 +27,8 @@ router.post("/verify-email", verifyEmail);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password/:token", resetPassword);
 
-// ✅ Protected route (requires token)
-router.get("/check-auth", verifyToken, checkAuth);
+// ✅ Protected route (allows banned to pass so client can show banned overlay)
+router.get("/check-auth", verifyTokenAllowBanned, checkAuth);
 
 // ✅ Admin-only route
 router.get(

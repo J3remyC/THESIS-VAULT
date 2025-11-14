@@ -12,7 +12,7 @@ const Departments = () => {
   };
 
   const load = async () => {
-    const res = await fetch("http://localhost:3000/api/superadmin/departments", { headers: headers(), credentials: "include" });
+    const res = await fetch("http://localhost:3000/api/catalog/departments", { headers: headers(), credentials: "include" });
     const data = await res.json();
     setList(Array.isArray(data) ? data : []);
   };

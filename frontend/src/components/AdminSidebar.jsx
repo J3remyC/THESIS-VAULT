@@ -29,6 +29,7 @@ const AdminSidebar = ({ user }) => {
       <Section title="User Management">
         <Item to="/admin-dashboard/users" label="View All Users" />
         <Item to="/admin-dashboard/users/new" label="Add New User" />
+        <Item to="/admin-dashboard/applications" label="Applications" />
         {user?.role === "superadmin" && (
           <Item to="/admin-dashboard/manage-roles" label="Manage Roles" />
         )}
@@ -36,6 +37,7 @@ const AdminSidebar = ({ user }) => {
       <Section title="Thesis Management">
         <Item to="/admin-dashboard/theses" label="All Submissions" />
         <Item to="/admin-dashboard/theses/pending" label="Pending Approval" />
+        <Item to="/admin-dashboard/theses/trash" label="Trash Bin" />
       </Section>
       <Section title="System Settings">
         <Item to="/admin-dashboard/departments" label="Departments" />

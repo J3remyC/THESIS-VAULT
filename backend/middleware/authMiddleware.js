@@ -10,6 +10,7 @@ export const verifyToken = async (req, res, next) => {
     const user = await User.findById(decoded.userId).select("-password");
 
     if (!user) return res.status(404).json({ message: "User not found" });
+    if (user.isBanned) return res.status(403).json({ message: "Account is banned" });
 
     req.user = user;
     next();

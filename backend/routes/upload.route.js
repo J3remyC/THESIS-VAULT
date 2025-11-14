@@ -170,15 +170,25 @@ router.delete("/:id", verifyToken, async (req, res) => {
     if (!file) return res.status(404).json({ message: "Not found" });
     if (String(file.uploadedBy) !== String(req.user._id)) return res.status(403).json({ message: "Forbidden" });
 
-    await File.findByIdAndDelete(req.params.id);
+    await File.findByIdAndUpdate(req.params.id, { trashed: true, trashedAt: new Date() }, { new: true });
     await ActivityLog.create({
       actor: req.user._id,
-      action: "DELETE_THESIS",
+      action: "TRASH_THESIS",
       details: { fileId: req.params.id, title: file.title },
     });
-    res.json({ message: "Deleted" });
+    res.json({ message: "Moved to trash" });
   } catch (err) {
     res.status(500).json({ message: "Failed to delete file" });
+  }
+});
+
+// ✅ List own trashed uploads
+router.get("/trash/mine", verifyToken, async (req, res) => {
+  try {
+    const files = await File.find({ uploadedBy: req.user._id, trashed: true }).sort({ trashedAt: -1 });
+    res.json(files);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch trashed files" });
   }
 });
 
