@@ -36,23 +36,23 @@ const DepartmentTheses = () => {
 
   return (
     <div className="p-4">
-      <h3 className="font-semibold mb-3">Theses by Department</h3>
+      <h3 className="font-semibold text-gray-900 mb-3">Theses by Department</h3>
       <div className="flex gap-2 mb-3">
-        <input className="p-2 rounded bg-gray-800 border border-gray-700" placeholder="Department name/code" value={dept} onChange={e=>setDept(e.target.value)} />
-        <button onClick={load} className="px-3 py-2 rounded bg-gray-800 hover:bg-gray-700 text-sm">Filter</button>
+        <input className="p-2 rounded border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" placeholder="Department name/code" value={dept} onChange={e=>setDept(e.target.value)} />
+        <button onClick={load} className="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 text-sm">Filter</button>
       </div>
       <div className="space-y-4">
         {keys.map(k => (
-          <div key={k} className="rounded border border-gray-800 bg-gray-900/50">
-            <div className="px-4 py-2 border-b border-gray-800 text-sm font-medium text-gray-200">{k}</div>
-            <ul className="divide-y divide-gray-900/60 text-sm">
+          <div key={k} className="rounded border border-gray-200 bg-white">
+            <div className="px-4 py-2 border-b border-gray-200 text-sm font-medium text-gray-900">{k}</div>
+            <ul className="divide-y divide-gray-200 text-sm">
               {grouped[k].map(i => (
                 <li key={i._id} className="px-4 py-2 flex items-center justify-between">
                   <div>
-                    <div className="text-gray-200">{i.title}</div>
-                    <div className="text-xs text-gray-500">{i.uploadedBy?.name} <span className="text-gray-600">{i.uploadedBy?.email}</span></div>
+                    <div className="text-gray-900">{i.title}</div>
+                    <div className="text-xs text-gray-500">{i.uploadedBy?.name} <span className="text-gray-400">{i.uploadedBy?.email}</span></div>
                   </div>
-                  <span className={`px-2 py-0.5 rounded text-xs ${i.status==='approved'?'bg-emerald-700/30 text-emerald-300':i.status==='pending'?'bg-yellow-700/30 text-yellow-300':'bg-red-700/30 text-red-300'}`}>{i.status}</span>
+                  <span className={`px-2 py-0.5 rounded text-xs ${i.status==='approved'?'bg-emerald-100 text-emerald-700':i.status==='pending'?'bg-yellow-100 text-yellow-700':'bg-red-100 text-red-700'}`}>{i.status}</span>
                 </li>
               ))}
             </ul>

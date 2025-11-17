@@ -50,12 +50,12 @@ const Navbar = () => {
   }, [query]);
 
   return (
-    <header className="w-full h-14 border-b border-gray-800 bg-gray-900/70 backdrop-blur sticky top-0 z-40">
+    <header className="w-full h-14 border-b border-gray-200 bg-white sticky top-0 z-40">
       <div className="h-full px-4 flex items-center gap-4">
         {/* Left: Logo */}
         <div className="flex items-center gap-3 shrink-0">
-          <div className="w-6 h-6 rounded bg-emerald-500" />
-          <span className="text-sm text-gray-200 font-semibold">THESIS VAULT</span>
+          <div className="w-6 h-6 rounded bg-primary" />
+          <span className="text-sm text-gray-900 font-semibold">THESIS VAULT</span>
         </div>
         {/* Center: Search */}
         {!isAdminRoute && (
@@ -96,10 +96,10 @@ const Navbar = () => {
                 }
               }}
               placeholder="Search theses (title, author, course)"
-              className="w-full h-9 px-3 rounded-full bg-gray-800/80 border border-gray-700 text-sm text-gray-200 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+              className="w-full h-9 px-3 rounded-full bg-white border border-gray-300 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary"
             />
             {showSuggestions && suggestions.length > 0 && (
-              <div className="absolute left-0 right-0 top-full mt-2 rounded-md border border-gray-700 bg-gray-900/95 backdrop-blur shadow-xl overflow-hidden">
+              <div className="absolute left-0 right-0 top-full mt-2 rounded-md border border-gray-200 bg-white shadow-xl overflow-hidden">
                 {suggestions.map((s, i) => (
                   <button
                     type="button"
@@ -109,13 +109,13 @@ const Navbar = () => {
                       navigate(`/thesis/${s._id}`);
                       setShowSuggestions(false);
                     }}
-                    className={`w-full text-left px-3 py-2 text-sm ${i === highlight ? "bg-gray-800 text-gray-100" : "text-gray-300 hover:bg-gray-800"}`}
+                    className={`w-full text-left px-3 py-2 text-sm ${i === highlight ? "bg-gray-100 text-gray-900" : "text-gray-700 hover:bg-gray-50"}`}
                   >
-                    <div className="truncate text-gray-200">{s.title || "Untitled"}</div>
+                    <div className="truncate text-gray-900">{s.title || "Untitled"}</div>
                     <div className="text-xs text-gray-500 truncate">{s.author || "Unknown"}{s.yearPublished ? ` • ${s.yearPublished}` : ""}{s.department ? ` • ${s.department}` : ""}</div>
                   </button>
                 ))}
-                <div className="px-3 py-2 text-xs text-gray-500 border-t border-gray-800">Press Enter to search all results</div>
+                <div className="px-3 py-2 text-xs text-gray-500 border-t border-gray-200">Press Enter to search all results</div>
               </div>
             )}
           </form>
@@ -125,22 +125,22 @@ const Navbar = () => {
         <div className="relative ml-auto">
           <button
             onClick={() => setOpen((v) => !v)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-md border border-gray-700 bg-gray-800 text-gray-200 text-sm hover:bg-gray-700"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-md border border-gray-300 bg-white text-gray-900 text-sm hover:bg-gray-50"
           >
             <span className="truncate max-w-[160px]">{user?.name || "Account"}</span>
             <ChevronDown size={16} />
           </button>
           {open && (
-            <div className="absolute right-0 mt-2 w-48 rounded-md border border-gray-700 bg-gray-800 shadow-lg">
-              <div className="px-3 py-2 text-xs text-gray-400">Signed in as</div>
-              <div className="px-3 pb-2 text-sm text-gray-200 truncate">{user?.email}</div>
-              <div className="h-px bg-gray-700" />
-              <Link to="/account" className="block px-3 py-2 text-sm text-gray-200 hover:bg-gray-700" onClick={()=>setOpen(false)}>
+            <div className="absolute right-0 mt-2 w-48 rounded-md border border-gray-200 bg-white shadow-lg">
+              <div className="px-3 py-2 text-xs text-gray-500">Signed in as</div>
+              <div className="px-3 pb-2 text-sm text-gray-900 truncate">{user?.email}</div>
+              <div className="h-px bg-gray-200" />
+              <Link to="/account" className="block px-3 py-2 text-sm text-gray-900 hover:bg-gray-50" onClick={()=>setOpen(false)}>
                 Account settings
               </Link>
               <button
                 onClick={logout}
-                className="w-full text-left px-3 py-2 text-sm text-red-300 hover:bg-gray-700"
+                className="w-full text-left px-3 py-2 text-sm text-primary hover:bg-gray-50"
               >
                 Logout
               </button>

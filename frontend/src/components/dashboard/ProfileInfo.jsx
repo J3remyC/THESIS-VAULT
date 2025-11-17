@@ -31,12 +31,12 @@ const ProfileInfo = ({ user }) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.1 }}
     >
-      <h3 className="text-lg font-semibold mb-3">Profile Information</h3>
-      <p className="text-gray-300">Name: {fullName}</p>
-      <p className="text-gray-300">Email: {user.email}</p>
-      <p className="text-gray-300">Section: {section}</p>
-      <p className="text-gray-300">Course: {course}</p>
-      <p className="text-gray-300">School year: {sy}</p>
+      <h3 className="text-lg font-semibold mb-3 text-gray-900">Profile Information</h3>
+      <p className="text-gray-700">Name: {fullName}</p>
+      <p className="text-gray-700">Email: {user.email}</p>
+      <p className="text-gray-700">Section: {section}</p>
+      <p className="text-gray-700">Course: {course}</p>
+      <p className="text-gray-700">School year: {sy}</p>
     </motion.div>
   );
 };

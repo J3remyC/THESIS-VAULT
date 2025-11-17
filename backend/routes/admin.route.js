@@ -305,9 +305,18 @@ router.post(
   authorizeRoles("admin", "superadmin"),
   async (req, res) => {
     try {
+      const current = await File.findById(req.params.id);
+      if (!current) return res.status(404).json({ message: "Not found" });
+
+      const updates = { trashed: false, trashedAt: null, trashReason: null };
+      // If the item was rejected and sent to trash, restore it back to pending review
+      if (current.trashReason === 'rejected') {
+        updates.status = 'pending';
+      }
+
       const file = await File.findByIdAndUpdate(
         req.params.id,
-        { trashed: false, trashedAt: null },
+        updates,
         { new: true }
       );
       if (!file) return res.status(404).json({ message: "Not found" });

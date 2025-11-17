@@ -97,13 +97,13 @@ const MyUploads = ({ myFiles = [], onChanged }) => {
       <div className="mb-3 flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
           <input
-            className="p-2 rounded bg-gray-800 border border-gray-700 text-sm"
+            className="p-2 rounded bg-white border border-gray-300 text-sm text-gray-900 placeholder:text-gray-400"
             placeholder="Search uploads"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
           <select
-            className="p-2 rounded bg-gray-800 border border-gray-700 text-sm"
+            className="p-2 rounded bg-white border border-gray-300 text-sm text-gray-900"
             value={status}
             onChange={(e) => setStatus(e.target.value)}
           >
@@ -117,40 +117,40 @@ const MyUploads = ({ myFiles = [], onChanged }) => {
 
       <div className="md:hidden grid grid-cols-1 gap-3">
         {filtered.map((f) => (
-          <div key={f._id} className="p-4 rounded-lg border border-gray-800 bg-gray-900/60">
+          <div key={f._id} className="p-4 rounded-lg border border-gray-200 bg-white">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <Badge f={f} />
                   <span className={`px-2 py-0.5 rounded text-[10px] ${
-                    f.status === 'approved' ? 'bg-emerald-600/30 text-emerald-300' :
-                    f.status === 'rejected' ? 'bg-red-600/30 text-red-300' :
-                    'bg-yellow-600/30 text-yellow-300'
+                    f.status === 'approved' ? 'bg-primary/10 text-primary' :
+                    f.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                    'bg-yellow-100 text-yellow-700'
                   }`}>{f.status}</span>
                   {f.trashed && (
-                    <span className="px-2 py-0.5 rounded text-[10px] bg-gray-700/50 text-gray-200 border border-gray-700">
+                    <span className="px-2 py-0.5 rounded text-[10px] bg-gray-100 text-gray-700 border border-gray-200">
                       In Trash • {timeLeft(f) || 'auto-deletes in 1 day'}
                     </span>
                   )}
                 </div>
-                <div className="font-medium text-gray-200 mt-1 truncate">{f.title}</div>
+                <div className="font-medium text-gray-900 mt-1 truncate">{f.title}</div>
                 <div className="text-xs text-gray-500 truncate">{f.author} • {f.filename}</div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 {f.url && (
-                  <a href={f.url} target="_blank" rel="noreferrer" className="p-2 rounded bg-gray-800 hover:bg-gray-700">
+                  <a href={f.url} target="_blank" rel="noreferrer" className="p-2 rounded bg-gray-100 hover:bg-gray-200 text-gray-900">
                     <Eye size={16} />
                   </a>
                 )}
                 {editingId === f._id ? (
                   <>
-                    <button onClick={saveEdit} className="p-2 rounded bg-emerald-700 hover:bg-emerald-600"><Save size={16} /></button>
-                    <button onClick={()=>setEditingId(null)} className="p-2 rounded bg-gray-800 hover:bg-gray-700"><IconX size={16} /></button>
+                    <button onClick={saveEdit} className="p-2 rounded bg-primary hover:brightness-110 text-white"><Save size={16} /></button>
+                    <button onClick={()=>setEditingId(null)} className="p-2 rounded bg-gray-100 hover:bg-gray-200 text-gray-900"><IconX size={16} /></button>
                   </>
                 ) : (
                   <>
-                    <button onClick={()=>startEdit(f)} className="p-2 rounded bg-blue-800 hover:bg-blue-700"><Edit3 size={16} /></button>
-                    <button onClick={()=>setConfirmId(f._id)} className="p-2 rounded bg-red-800 hover:bg-red-700"><Trash2 size={16} /></button>
+                    <button onClick={()=>startEdit(f)} className="p-2 rounded bg-gray-100 hover:bg-gray-200 text-gray-900"><Edit3 size={16} /></button>
+                    <button onClick={()=>setConfirmId(f._id)} className="p-2 rounded bg-red-600 hover:bg-red-500 text-white"><Trash2 size={16} /></button>
                   </>
                 )}
               </div>
@@ -158,11 +158,11 @@ const MyUploads = ({ myFiles = [], onChanged }) => {
 
             {editingId === f._id && (
               <div className="grid grid-cols-1 gap-2 mt-3">
-                <input className="p-2 rounded bg-gray-800 border border-gray-700" placeholder="Title" value={form.title} onChange={(e)=>setForm({...form,title:e.target.value})} />
-                <input className="p-2 rounded bg-gray-800 border border-gray-700" placeholder="Author" value={form.author} onChange={(e)=>setForm({...form,author:e.target.value})} />
-                <input className="p-2 rounded bg-gray-800 border border-gray-700" placeholder="Course" value={form.course} onChange={(e)=>setForm({...form,course:e.target.value})} />
-                <input className="p-2 rounded bg-gray-800 border border-gray-700" placeholder="Year" type="number" value={form.yearPublished} onChange={(e)=>setForm({...form,yearPublished:e.target.value})} />
-                <input className="p-2 rounded bg-gray-800 border border-gray-700" placeholder="Department code (e.g., BSCS)" value={form.department} onChange={(e)=>setForm({...form,department:e.target.value})} />
+                <input className="p-2 rounded bg-white border border-gray-300 text-gray-900" placeholder="Title" value={form.title} onChange={(e)=>setForm({...form,title:e.target.value})} />
+                <input className="p-2 rounded bg-white border border-gray-300 text-gray-900" placeholder="Author" value={form.author} onChange={(e)=>setForm({...form,author:e.target.value})} />
+                <input className="p-2 rounded bg-white border border-gray-300 text-gray-900" placeholder="Course" value={form.course} onChange={(e)=>setForm({...form,course:e.target.value})} />
+                <input className="p-2 rounded bg-white border border-gray-300 text-gray-900" placeholder="Year" type="number" value={form.yearPublished} onChange={(e)=>setForm({...form,yearPublished:e.target.value})} />
+                <input className="p-2 rounded bg-white border border-gray-300 text-gray-900" placeholder="Department code (e.g., BSCS)" value={form.department} onChange={(e)=>setForm({...form,department:e.target.value})} />
               </div>
             )}
           </div>
@@ -171,7 +171,7 @@ const MyUploads = ({ myFiles = [], onChanged }) => {
 
       <div className="hidden md:block overflow-x-auto">
         <table className="min-w-full text-sm">
-          <thead className="text-left text-gray-400 border-b border-gray-800">
+          <thead className="text-left text-gray-500 border-b border-gray-200">
             <tr>
               <th className="py-2 pr-4">Title</th>
               <th className="py-2 pr-4">Department</th>
@@ -181,61 +181,61 @@ const MyUploads = ({ myFiles = [], onChanged }) => {
           </thead>
           <tbody>
             {filtered.map((f) => (
-              <tr key={f._id} className="border-b border-gray-900/60 hover:bg-gray-900/40">
+              <tr key={f._id} className="border-b border-gray-100 hover:bg-gray-50">
                 <td className="py-2 pr-4 align-top">
                   {editingId === f._id ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                      <input className="p-2 rounded bg-gray-800 border border-gray-700" placeholder="Title" value={form.title} onChange={(e)=>setForm({...form,title:e.target.value})} />
-                      <input className="p-2 rounded bg-gray-800 border border-gray-700" placeholder="Author" value={form.author} onChange={(e)=>setForm({...form,author:e.target.value})} />
-                      <input className="p-2 rounded bg-gray-800 border border-gray-700" placeholder="Course" value={form.course} onChange={(e)=>setForm({...form,course:e.target.value})} />
-                      <input className="p-2 rounded bg-gray-800 border border-gray-700" placeholder="Year" type="number" value={form.yearPublished} onChange={(e)=>setForm({...form,yearPublished:e.target.value})} />
-                      <input className="p-2 rounded bg-gray-800 border border-gray-700 md:col-span-2" placeholder="Department code (e.g., BSCS)" value={form.department} onChange={(e)=>setForm({...form,department:e.target.value})} />
+                      <input className="p-2 rounded bg-white border border-gray-300 text-gray-900" placeholder="Title" value={form.title} onChange={(e)=>setForm({...form,title:e.target.value})} />
+                      <input className="p-2 rounded bg-white border border-gray-300 text-gray-900" placeholder="Author" value={form.author} onChange={(e)=>setForm({...form,author:e.target.value})} />
+                      <input className="p-2 rounded bg-white border border-gray-300 text-gray-900" placeholder="Course" value={form.course} onChange={(e)=>setForm({...form,course:e.target.value})} />
+                      <input className="p-2 rounded bg-white border border-gray-300 text-gray-900" placeholder="Year" type="number" value={form.yearPublished} onChange={(e)=>setForm({...form,yearPublished:e.target.value})} />
+                      <input className="p-2 rounded bg-white border border-gray-300 text-gray-900 md:col-span-2" placeholder="Department code (e.g., BSCS)" value={form.department} onChange={(e)=>setForm({...form,department:e.target.value})} />
                     </div>
                   ) : (
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <Badge f={f} />
-                        <div className="font-medium text-gray-200">{f.title}</div>
+                        <div className="font-medium text-gray-900">{f.title}</div>
                         {f.trashed && (
-                          <span className="px-2 py-0.5 rounded text-[10px] bg-gray-700/50 text-gray-200 border border-gray-700">
+                          <span className="px-2 py-0.5 rounded text-[10px] bg-gray-100 text-gray-700 border border-gray-200">
                             In Trash • {timeLeft(f) || 'auto-deletes in 1 day'}
                           </span>
                         )}
                       </div>
-                      <div className="text-xs text-gray-400 truncate">{f.filename}</div>
+                      <div className="text-xs text-gray-500 truncate">{f.filename}</div>
                       <div className="text-xs text-gray-500">{f.author}</div>
                     </div>
                   )}
                 </td>
-                <td className="py-2 pr-4 text-gray-300 align-top">{f.department || "—"}</td>
+                <td className="py-2 pr-4 text-gray-700 align-top">{f.department || "—"}</td>
                 <td className="py-2 pr-4 align-top">
                   <div className="space-y-1">
                     <span className={`px-2 py-0.5 rounded text-xs ${
-                      f.status === 'approved' ? 'bg-emerald-600/30 text-emerald-300' :
-                      f.status === 'rejected' ? 'bg-red-600/30 text-red-300' :
-                      'bg-yellow-600/30 text-yellow-300'
+                      f.status === 'approved' ? 'bg-primary/10 text-primary' :
+                      f.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                      'bg-yellow-100 text-yellow-700'
                     }`}>
                       {f.status}
                     </span>
                     {f.status === 'rejected' && f.rejectionReason && (
-                      <div className="text-xs text-red-300/90 max-w-xs">Reason: {f.rejectionReason}</div>
+                      <div className="text-xs text-red-700 max-w-xs">Reason: {f.rejectionReason}</div>
                     )}
                   </div>
                 </td>
                 <td className="py-2 pr-4 align-top">
                   <div className="flex items-center gap-2">
                     {f.url && (
-                      <a href={f.url} target="_blank" rel="noreferrer" className="p-2 rounded bg-gray-800 hover:bg-gray-700"><Eye size={16} /></a>
+                      <a href={f.url} target="_blank" rel="noreferrer" className="p-2 rounded bg-gray-100 hover:bg-gray-200 text-gray-900"><Eye size={16} /></a>
                     )}
                     {editingId === f._id ? (
                       <>
-                        <button onClick={saveEdit} className="p-2 rounded bg-emerald-700 hover:bg-emerald-600"><Save size={16} /></button>
-                        <button onClick={()=>setEditingId(null)} className="p-2 rounded bg-gray-800 hover:bg-gray-700"><IconX size={16} /></button>
+                        <button onClick={saveEdit} className="p-2 rounded bg-primary hover:brightness-110 text-white"><Save size={16} /></button>
+                        <button onClick={()=>setEditingId(null)} className="p-2 rounded bg-gray-100 hover:bg-gray-200 text-gray-900"><IconX size={16} /></button>
                       </>
                     ) : (
                       <>
-                        <button onClick={()=>startEdit(f)} className="p-2 rounded bg-blue-800 hover:bg-blue-700"><Edit3 size={16} /></button>
-                        <button onClick={()=>setConfirmId(f._id)} className="p-2 rounded bg-red-800 hover:bg-red-700"><Trash2 size={16} /></button>
+                        <button onClick={()=>startEdit(f)} className="p-2 rounded bg-gray-100 hover:bg-gray-200 text-gray-900"><Edit3 size={16} /></button>
+                        <button onClick={()=>setConfirmId(f._id)} className="p-2 rounded bg-red-600 hover:bg-red-500 text-white"><Trash2 size={16} /></button>
                       </>
                     )}
                   </div>
@@ -247,13 +247,13 @@ const MyUploads = ({ myFiles = [], onChanged }) => {
       </div>
 
       {confirmId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-sm rounded-lg border border-gray-800 bg-gray-900 p-5">
-            <div className="text-lg font-semibold mb-2">Delete upload?</div>
-            <div className="text-sm text-gray-400 mb-4">This action cannot be undone.</div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
+          <div className="w-full max-w-sm rounded-lg border border-gray-200 bg-white p-5">
+            <div className="text-lg font-semibold mb-2 text-gray-900">Delete upload?</div>
+            <div className="text-sm text-gray-500 mb-4">This action cannot be undone.</div>
             <div className="flex justify-end gap-2">
-              <button onClick={() => setConfirmId(null)} className="px-3 py-1.5 rounded bg-gray-800 hover:bg-gray-700 text-sm">Cancel</button>
-              <button onClick={() => deleteItem(confirmId)} className="px-3 py-1.5 rounded bg-red-700 hover:bg-red-600 text-sm">Delete</button>
+              <button onClick={() => setConfirmId(null)} className="px-3 py-1.5 rounded bg-gray-100 hover:bg-gray-200 text-sm text-gray-900">Cancel</button>
+              <button onClick={() => deleteItem(confirmId)} className="px-3 py-1.5 rounded bg-red-600 hover:bg-red-500 text-sm text-white">Delete</button>
             </div>
           </div>
         </div>

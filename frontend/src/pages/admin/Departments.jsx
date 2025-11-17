@@ -53,38 +53,38 @@ const Departments = () => {
 
   return (
     <div className="p-4">
-      <h3 className="font-semibold mb-3">System Settings: Courses</h3>
+      <h3 className="font-semibold text-gray-900 mb-3">Departments</h3>
       <form onSubmit={add} className="flex gap-2 mb-3">
-        <input className="p-2 rounded bg-gray-800 border border-gray-700" placeholder="Course (e.g., Bachelor of Science in Computer Science)" value={form.name} onChange={e=>setForm({ ...form, name: e.target.value })} required />
-        <input className="p-2 rounded bg-gray-800 border border-gray-700" placeholder="Code (e.g., BSCS)" value={form.code} onChange={e=>setForm({ ...form, code: e.target.value })} />
-        <button className="px-3 py-2 rounded bg-emerald-600 hover:bg-emerald-500 text-sm">Add Course</button>
+        <input className="p-2 rounded border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" placeholder="Department (e.g., Computer Science)" value={form.name} onChange={e=>setForm({ ...form, name: e.target.value })} required />
+        <input className="p-2 rounded border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" placeholder="Code (e.g., BSCS)" value={form.code} onChange={e=>setForm({ ...form, code: e.target.value })} />
+        <button className="px-3 py-2 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-sm">Add</button>
       </form>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
         <table className="min-w-full text-sm">
-          <thead className="text-left text-gray-400 border-b border-gray-800"><tr><th className="py-2 pr-4">Course</th><th className="py-2 pr-4">Code</th><th className="py-2 pr-4">Actions</th></tr></thead>
+          <thead className="text-left text-gray-500 border-b border-gray-200 bg-gray-50"><tr><th className="py-2 pr-4">Department</th><th className="py-2 pr-4">Code</th><th className="py-2 pr-4">Actions</th></tr></thead>
           <tbody>
             {list.map(d => (
-              <tr key={d._id} className="border-b border-gray-900/60">
+              <tr key={d._id} className="border-b last:border-b-0 border-gray-200">
                 <td className="py-2 pr-4">
                   {editId === d._id ? (
-                    <input className="p-2 rounded bg-gray-800 border border-gray-700 w-full" value={editForm.name} onChange={e=>setEditForm({ ...editForm, name: e.target.value })} />
+                    <input className="p-2 rounded border border-gray-300 bg-white w-full focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" value={editForm.name} onChange={e=>setEditForm({ ...editForm, name: e.target.value })} />
                   ) : d.name}
                 </td>
                 <td className="py-2 pr-4">
                   {editId === d._id ? (
-                    <input className="p-2 rounded bg-gray-800 border border-gray-700 w-full" value={editForm.code || ''} onChange={e=>setEditForm({ ...editForm, code: e.target.value })} />
+                    <input className="p-2 rounded border border-gray-300 bg-white w-full focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" value={editForm.code || ''} onChange={e=>setEditForm({ ...editForm, code: e.target.value })} />
                   ) : (d.code || '—')}
                 </td>
                 <td className="py-2 pr-4 space-x-2">
                   {editId === d._id ? (
                     <>
-                      <button onClick={saveEdit} className="px-2 py-1 text-xs rounded bg-blue-700 hover:bg-blue-600">Save</button>
-                      <button onClick={cancelEdit} className="px-2 py-1 text-xs rounded bg-gray-800 hover:bg-gray-700">Cancel</button>
+                      <button onClick={saveEdit} className="px-2 py-1 text-xs rounded bg-blue-600 hover:bg-blue-500 text-white">Save</button>
+                      <button onClick={cancelEdit} className="px-2 py-1 text-xs rounded bg-gray-100 hover:bg-gray-200 text-gray-800">Cancel</button>
                     </>
                   ) : (
                     <>
-                      <button onClick={()=>startEdit(d)} className="px-2 py-1 text-xs rounded bg-gray-800 hover:bg-gray-700">Edit</button>
-                      <button onClick={()=>remove(d._id)} className="px-2 py-1 text-xs rounded bg-red-700 hover:bg-red-600">Delete</button>
+                      <button onClick={()=>startEdit(d)} className="px-2 py-1 text-xs rounded bg-gray-100 hover:bg-gray-200 text-gray-800">Edit</button>
+                      <button onClick={()=>remove(d._id)} className="px-2 py-1 text-xs rounded bg-red-600 hover:bg-red-500 text-white">Delete</button>
                     </>
                   )}
                 </td>

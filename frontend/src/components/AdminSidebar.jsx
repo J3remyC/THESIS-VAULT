@@ -3,7 +3,7 @@ import { NavLink } from "react-router-dom";
 
 const Section = ({ title, children }) => (
   <div className="mt-4">
-    <div className="px-3 py-2 text-xs uppercase tracking-wide text-gray-400">{title}</div>
+    <div className="px-3 py-2 text-xs uppercase tracking-wide text-gray-500">{title}</div>
     <div className="flex flex-col px-2 space-y-1">{children}</div>
   </div>
 );
@@ -12,7 +12,7 @@ const Item = ({ to, label }) => (
   <NavLink
     to={to}
     className={({ isActive }) =>
-      `px-3 py-2 rounded-md text-sm ${isActive ? "bg-gray-800 text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"}`
+      `px-3 py-2 rounded-md text-sm ${isActive ? "bg-gray-100 text-gray-900" : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"}`
     }
     end
   >
@@ -22,7 +22,7 @@ const Item = ({ to, label }) => (
 
 const AdminSidebar = ({ user }) => {
   return (
-    <aside className="w-72 shrink-0 border-r border-gray-800 bg-gray-900/50 backdrop-blur hidden md:flex md:flex-col py-3">
+    <aside className="w-72 shrink-0 border-r border-gray-200 bg-white hidden md:flex md:flex-col py-3">
       <Section title="Dashboard">
         <Item to="/admin-dashboard" label="Overview" />
       </Section>

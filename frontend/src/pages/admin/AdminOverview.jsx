@@ -47,27 +47,27 @@ const AdminOverview = () => {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold">Admin Overview</h2>
+      <h2 className="text-xl font-semibold text-gray-900">Admin Overview</h2>
 
       {/* Metric cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="p-4 bg-gray-900/60 rounded border border-gray-800"><div className="text-xs text-gray-400">TOTAL STUDENTS</div><div className="text-2xl">{metrics?.totalStudents ?? '—'}</div></div>
-        <div className="p-4 bg-gray-900/60 rounded border border-gray-800"><div className="text-xs text-gray-400">TOTAL TEACHERS</div><div className="text-2xl">{metrics?.totalTeachers ?? '—'}</div></div>
-        <div className="p-4 bg-gray-900/60 rounded border border-gray-800"><div className="text-xs text-gray-400">TOTAL THESES</div><div className="text-2xl">{metrics?.totalTheses ?? '—'}</div></div>
-        <div className="p-4 bg-gray-900/60 rounded border border-gray-800"><div className="text-xs text-gray-400">DEPARTMENTS</div><div className="text-2xl">{metrics?.totalDepartments ?? '—'}</div></div>
+        <div className="p-4 bg-white rounded border border-gray-200"><div className="text-xs text-gray-500">TOTAL STUDENTS</div><div className="text-2xl text-gray-900">{metrics?.totalStudents ?? '—'}</div></div>
+        <div className="p-4 bg-white rounded border border-gray-200"><div className="text-xs text-gray-500">TOTAL TEACHERS</div><div className="text-2xl text-gray-900">{metrics?.totalTeachers ?? '—'}</div></div>
+        <div className="p-4 bg-white rounded border border-gray-200"><div className="text-xs text-gray-500">TOTAL THESES</div><div className="text-2xl text-gray-900">{metrics?.totalTheses ?? '—'}</div></div>
+        <div className="p-4 bg-white rounded border border-gray-200"><div className="text-xs text-gray-500">DEPARTMENTS</div><div className="text-2xl text-gray-900">{metrics?.totalDepartments ?? '—'}</div></div>
       </div>
 
       {/* Uploads last 14 days mini-chart */}
-      <div className="p-4 bg-gray-900/60 rounded border border-gray-800">
+      <div className="p-4 bg-white rounded border border-gray-200">
         <div className="flex items-end gap-1 h-32">
           {series.map((s, idx) => (
             <div key={idx} className="flex-1 flex flex-col items-center">
-              <div className="w-full bg-emerald-600/70" style={{ height: `${(s.value / maxVal) * 100}%` }} />
-              <div className="mt-1 text-[10px] text-gray-400">{s.label}</div>
+              <div className="w-full bg-primary/80" style={{ height: `${(s.value / maxVal) * 100}%` }} />
+              <div className="mt-1 text-[10px] text-gray-500">{s.label}</div>
             </div>
           ))}
         </div>
-        <div className="mt-2 text-xs text-gray-400">Uploads over last 14 days</div>
+        <div className="mt-2 text-xs text-gray-500">Uploads over last 14 days</div>
       </div>
     </div>
   );

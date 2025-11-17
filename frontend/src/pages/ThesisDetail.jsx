@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
-import FloatingShape from "../components/FloatingShape";
 import { useAuthStore } from "../store/authStore";
 
 const ThesisDetail = () => {
@@ -74,12 +73,7 @@ const ThesisDetail = () => {
   };
 
   return (
-    <div className="fixed inset-0 text-white">
-      <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-green-900 to-emerald-900" />
-      <FloatingShape color="bg-green-500" size="w-64 h-64" top="-5%" left="10%" delay={0} />
-      <FloatingShape color="bg-emerald-500" size="w-48 h-48" top="70%" left="80%" delay={5} />
-      <FloatingShape color="bg-lime-500" size="w-32 h-32" top="40%" left="10%" delay={2} />
-
+    <div className="fixed inset-0 text-gray-900 bg-white">
       <div className="relative z-10 flex flex-col h-full">
         <Navbar />
         <div className="flex flex-1 min-h-0">
@@ -87,12 +81,12 @@ const ThesisDetail = () => {
           <div className="flex-1 min-w-0 overflow-y-auto">
             <div className="max-w-6xl mx-auto p-6 space-y-6">
               {/* Breadcrumbs */}
-              <div className="text-sm text-gray-400 flex items-center gap-2">
-                <button onClick={() => navigate("/")} className="hover:text-gray-200">Home</button>
+              <div className="text-sm text-gray-500 flex items-center gap-2">
+                <button onClick={() => navigate("/")} className="hover:text-gray-700">Home</button>
                 <span>/</span>
-                <button onClick={() => navigate("/theses")} className="hover:text-gray-200">Theses</button>
+                <button onClick={() => navigate("/theses")} className="hover:text-gray-700">Theses</button>
                 <span>/</span>
-                <span className="text-gray-300 truncate max-w-[50ch]">{thesis?.title || "Thesis"}</span>
+                <span className="text-gray-700 truncate max-w-[50ch]">{thesis?.title || "Thesis"}</span>
               </div>
 
               {/* Repo-like header */}
@@ -101,13 +95,13 @@ const ThesisDetail = () => {
                   <h1 className="text-2xl font-semibold truncate">{thesis?.title || "Thesis"}</h1>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button onClick={() => navigate(-1)} className="px-3 py-1.5 text-sm rounded bg-gray-800 hover:bg-gray-700">Back</button>
+                  <button onClick={() => navigate(-1)} className="px-3 py-1.5 text-sm rounded bg-gray-100 hover:bg-gray-200 text-gray-900">Back</button>
                   {thesis?.url && (
                     <a
                       href={thesis.url}
                       target="_blank"
                       rel="noreferrer"
-                      className="px-3 py-1.5 text-sm rounded bg-emerald-600 hover:bg-emerald-500"
+                      className="px-3 py-1.5 text-sm rounded bg-primary hover:brightness-110 text-white"
                     >
                       View
                     </a>
@@ -117,7 +111,7 @@ const ThesisDetail = () => {
                       href={`http://localhost:3000/api/upload/${thesis._id}/download`}
                       target="_blank"
                       rel="noreferrer"
-                      className="px-3 py-1.5 text-sm rounded bg-gray-700 hover:bg-gray-600"
+                      className="px-3 py-1.5 text-sm rounded bg-gray-100 hover:bg-gray-200 text-gray-900"
                     >
                       Download
                     </a>
@@ -126,12 +120,12 @@ const ThesisDetail = () => {
               </div>
 
               {/* Tabs-like bar */}
-              <div className="border-b border-gray-800 flex gap-6 text-sm" role="tablist">
+              <div className="border-b border-gray-200 flex gap-6 text-sm" role="tablist">
                 <button
                   role="tab"
                   aria-selected={activeTab === "overview"}
                   onClick={() => setActiveTab("overview")}
-                  className={`py-2 ${activeTab === "overview" ? "border-b-2 border-emerald-500 text-gray-200" : "text-gray-400 hover:text-gray-200"}`}
+                  className={`py-2 ${activeTab === "overview" ? "border-b-2 border-primary text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
                 >
                   Overview
                 </button>
@@ -139,7 +133,7 @@ const ThesisDetail = () => {
                   role="tab"
                   aria-selected={activeTab === "files"}
                   onClick={() => setActiveTab("files")}
-                  className={`py-2 ${activeTab === "files" ? "border-b-2 border-emerald-500 text-gray-200" : "text-gray-400 hover:text-gray-2 00"}`}
+                  className={`py-2 ${activeTab === "files" ? "border-b-2 border-primary text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
                 >
                   Files
                 </button>
@@ -147,7 +141,7 @@ const ThesisDetail = () => {
                   role="tab"
                   aria-selected={activeTab === "insights"}
                   onClick={() => setActiveTab("insights")}
-                  className={`py-2 ${activeTab === "insights" ? "border-b-2 border-emerald-500 text-gray-200" : "text-gray-400 hover:text-gray-200"}`}
+                  className={`py-2 ${activeTab === "insights" ? "border-b-2 border-primary text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
                 >
                   Insights
                 </button>
@@ -159,46 +153,46 @@ const ThesisDetail = () => {
                 <div className="md:col-span-2 space-y-4">
                   {activeTab === "overview" && (
                     <>
-                      <div className="p-4 bg-gray-900/60 border border-gray-800 rounded-lg">
-                        <div className="text-sm text-gray-400 mb-2">README.md</div>
+                      <div className="p-4 bg-white border border-gray-200 rounded-lg">
+                        <div className="text-sm text-gray-500 mb-2">README.md</div>
                         {loading ? (
-                          <div className="text-gray-400">Loading...</div>
+                          <div className="text-gray-500">Loading...</div>
                         ) : error ? (
-                          <div className="text-red-400">{error}</div>
+                          <div className="text-red-600">{error}</div>
                         ) : (
-                          <div className="prose prose-invert max-w-none">
+                          <div className="prose max-w-none">
                             <p className="whitespace-pre-wrap">{thesis?.description || "No description provided."}</p>
                           </div>
                         )}
                       </div>
 
-                      <div className="p-4 bg-gray-900/60 border border-gray-800 rounded-lg">
-                        <div className="text-sm text-gray-400 mb-3">Metadata</div>
-                        <ul className="text-sm text-gray-300 space-y-1">
-                          <li><span className="text-gray-400">Author:</span> {thesis?.author || "—"}</li>
-                          <li><span className="text-gray-400">Year:</span> {thesis?.yearPublished || "—"}</li>
-                          <li><span className="text-gray-400">Department:</span> {thesis?.department || "—"}</li>
-                          <li><span className="text-gray-400">Course:</span> {thesis?.course || "—"}</li>
-                          <li><span className="text-gray-400">Filename:</span> {thesis?.filename || "—"}</li>
+                      <div className="p-4 bg-white border border-gray-200 rounded-lg">
+                        <div className="text-sm text-gray-500 mb-3">Metadata</div>
+                        <ul className="text-sm text-gray-700 space-y-1">
+                          <li><span className="text-gray-500">Author:</span> {thesis?.author || "—"}</li>
+                          <li><span className="text-gray-500">Year:</span> {thesis?.yearPublished || "—"}</li>
+                          <li><span className="text-gray-500">Department:</span> {thesis?.department || "—"}</li>
+                          <li><span className="text-gray-500">Course:</span> {thesis?.course || "—"}</li>
+                          <li><span className="text-gray-500">Filename:</span> {thesis?.filename || "—"}</li>
                         </ul>
                       </div>
                     </>
                   )}
 
                   {activeTab === "files" && (
-                    <div className="p-4 bg-gray-900/60 border border-gray-800 rounded-lg space-y-3">
-                      <div className="text-sm text-gray-400">Files</div>
-                      <div className="flex items-center justify-between p-3 rounded border border-gray-800 bg-gray-900/60">
+                    <div className="p-4 bg-white border border-gray-200 rounded-lg space-y-3">
+                      <div className="text-sm text-gray-500">Files</div>
+                      <div className="flex items-center justify-between p-3 rounded border border-gray-200 bg-white">
                         <div>
-                          <div className="text-gray-200 text-sm">{thesis?.filename || "thesis"}</div>
+                          <div className="text-gray-900 text-sm">{thesis?.filename || "thesis"}</div>
                           <div className="text-xs text-gray-500">{thesis?.format || thesis?.resourceType || "file"}</div>
                         </div>
                         <div className="flex items-center gap-2">
                           {thesis?.url && (
-                            <a href={thesis.url} target="_blank" rel="noreferrer" className="px-3 py-1.5 text-sm rounded bg-emerald-600 hover:bg-emerald-500">View</a>
+                            <a href={thesis.url} target="_blank" rel="noreferrer" className="px-3 py-1.5 text-sm rounded bg-primary hover:brightness-110 text-white">View</a>
                           )}
                           {thesis?._id && (
-                            <a href={`http://localhost:3000/api/upload/${thesis._id}/download`} target="_blank" rel="noreferrer" className="px-3 py-1.5 text-sm rounded bg-gray-700 hover:bg-gray-600">Download</a>
+                            <a href={`http://localhost:3000/api/upload/${thesis._id}/download`} target="_blank" rel="noreferrer" className="px-3 py-1.5 text-sm rounded bg-gray-100 hover:bg-gray-200 text-gray-900">Download</a>
                           )}
                         </div>
                       </div>
@@ -206,15 +200,15 @@ const ThesisDetail = () => {
                   )}
 
                   {activeTab === "insights" && (
-                    <div className="p-4 bg-gray-900/60 border border-gray-800 rounded-lg space-y-3">
-                      <div className="text-sm text-gray-400">Insights</div>
-                      <ul className="text-sm text-gray-300 space-y-1">
-                        <li><span className="text-gray-400">Upvotes:</span> {thesis?.upvotes || 0}</li>
-                        <li><span className="text-gray-400">Downvotes:</span> {thesis?.downvotes || 0}</li>
-                        <li><span className="text-gray-400">Score:</span> {score}</li>
-                        <li><span className="text-gray-400">Uploaded by:</span> {thesis?.uploadedBy?.name || thesis?.uploadedBy?.email || "Unknown"}</li>
-                        <li><span className="text-gray-400">Created:</span> {thesis?.createdAt ? new Date(thesis.createdAt).toLocaleString() : "—"}</li>
-                        <li><span className="text-gray-400">Format:</span> {thesis?.format || thesis?.resourceType || "—"}</li>
+                    <div className="p-4 bg-white border border-gray-200 rounded-lg space-y-3">
+                      <div className="text-sm text-gray-500">Insights</div>
+                      <ul className="text-sm text-gray-700 space-y-1">
+                        <li><span className="text-gray-500">Upvotes:</span> {thesis?.upvotes || 0}</li>
+                        <li><span className="text-gray-500">Downvotes:</span> {thesis?.downvotes || 0}</li>
+                        <li><span className="text-gray-500">Score:</span> {score}</li>
+                        <li><span className="text-gray-500">Uploaded by:</span> {thesis?.uploadedBy?.name || thesis?.uploadedBy?.email || "Unknown"}</li>
+                        <li><span className="text-gray-500">Created:</span> {thesis?.createdAt ? new Date(thesis.createdAt).toLocaleString() : "—"}</li>
+                        <li><span className="text-gray-500">Format:</span> {thesis?.format || thesis?.resourceType || "—"}</li>
                       </ul>
                     </div>
                   )}
@@ -222,30 +216,30 @@ const ThesisDetail = () => {
 
                 {/* Right: sidebar cards like GitHub repo insights */}
                 <div className="space-y-4">
-                  <div className="p-4 bg-gray-900/60 border border-gray-800 rounded-lg">
-                    <div className="text-sm text-gray-400 mb-2">Voting</div>
+                  <div className="p-4 bg-white border border-gray-200 rounded-lg">
+                    <div className="text-sm text-gray-500 mb-2">Voting</div>
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => vote("up")}
-                        className={`px-3 py-1.5 text-sm rounded ${hasUpvoted ? "bg-emerald-500" : "bg-emerald-600 hover:bg-emerald-500"}`}
+                        className={`px-3 py-1.5 text-sm rounded ${hasUpvoted ? "bg-primary" : "bg-primary hover:brightness-110"} text-white`}
                       >
                         ▲ Upvote
                       </button>
-                      <span className="text-gray-200 text-sm">{thesis?.upvotes || 0}</span>
+                      <span className="text-gray-700 text-sm">{thesis?.upvotes || 0}</span>
                       <button
                         onClick={() => vote("down")}
-                        className={`px-3 py-1.5 text-sm rounded ${hasDownvoted ? "bg-gray-700" : "bg-gray-800 hover:bg-gray-700"}`}
+                        className={`px-3 py-1.5 text-sm rounded ${hasDownvoted ? "bg-gray-100" : "bg-gray-100 hover:bg-gray-200"} text-gray-900`}
                       >
                         ▼ Downvote
                       </button>
-                      <span className="text-gray-400 text-sm">{thesis?.downvotes || 0}</span>
+                      <span className="text-gray-500 text-sm">{thesis?.downvotes || 0}</span>
                     </div>
-                    <div className="mt-2 text-xs text-gray-400">Score: {score}</div>
+                    <div className="mt-2 text-xs text-gray-500">Score: {score}</div>
                   </div>
 
-                  <div className="p-4 bg-gray-900/60 border border-gray-800 rounded-lg">
-                    <div className="text-sm text-gray-400 mb-2">About</div>
-                    <div className="text-sm text-gray-300">Uploaded by: {thesis?.uploadedBy?.name || thesis?.uploadedBy?.email || "Unknown"}</div>
+                  <div className="p-4 bg-white border border-gray-200 rounded-lg">
+                    <div className="text-sm text-gray-500 mb-2">About</div>
+                    <div className="text-sm text-gray-700">Uploaded by: {thesis?.uploadedBy?.name || thesis?.uploadedBy?.email || "Unknown"}</div>
                   </div>
                 </div>
               </div>
