@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Eye, Edit3, Trash2, Save, X as IconX, FileText, Image as ImageIcon, File as FileIcon } from "lucide-react";
 
@@ -8,7 +8,55 @@ const MyUploads = ({ myFiles = [], onChanged }) => {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("");
   const [confirmId, setConfirmId] = useState(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState("");
+  const [previewType, setPreviewType] = useState("");
+  const [previewOriginalUrl, setPreviewOriginalUrl] = useState("");
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl && previewUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
+  const openPreview = async (file) => {
+    if (!file?._id) return;
+    setPreviewError("");
+    setPreviewLoading(true);
+    setPreviewOpen(true);
+    try {
+      const res = await fetch(`http://localhost:3000/api/upload/${file._id}/download`, {
+        headers: { Authorization: token ? `Bearer ${token}` : undefined },
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const blob = await res.blob();
+      const type = res.headers.get("Content-Type") || blob.type || "";
+      const url = URL.createObjectURL(blob);
+      if (previewUrl && previewUrl.startsWith("blob:")) URL.revokeObjectURL(previewUrl);
+      setPreviewType(type);
+      setPreviewUrl(url);
+      setPreviewOriginalUrl(file?.url || "");
+    } catch (e) {
+      if (file?.url) {
+        const ext = (file.url.split(".").pop() || "").toLowerCase();
+        const guessed = ext === 'pdf' ? 'application/pdf' : ext.match(/png|jpe?g|webp|gif/) ? `image/${ext==='jpg'?'jpeg':ext}` : '';
+        setPreviewType(guessed);
+        setPreviewUrl(file.url);
+        setPreviewOriginalUrl(file.url);
+        setPreviewError("");
+      } else {
+        setPreviewError("Failed to load preview. Try downloading instead.");
+      }
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
 
   const startEdit = (f) => {
     setEditingId(f._id);
@@ -137,10 +185,10 @@ const MyUploads = ({ myFiles = [], onChanged }) => {
                 <div className="text-xs text-gray-500 truncate">{f.author} • {f.filename}</div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                {f.url && (
-                  <a href={f.url} target="_blank" rel="noreferrer" className="p-2 rounded bg-gray-100 hover:bg-gray-200 text-gray-900">
+                {f._id && (
+                  <button onClick={() => openPreview(f)} className="p-2 rounded bg-gray-100 hover:bg-gray-200 text-gray-900">
                     <Eye size={16} />
-                  </a>
+                  </button>
                 )}
                 {editingId === f._id ? (
                   <>
@@ -224,8 +272,8 @@ const MyUploads = ({ myFiles = [], onChanged }) => {
                 </td>
                 <td className="py-2 pr-4 align-top">
                   <div className="flex items-center gap-2">
-                    {f.url && (
-                      <a href={f.url} target="_blank" rel="noreferrer" className="p-2 rounded bg-gray-100 hover:bg-gray-200 text-gray-900"><Eye size={16} /></a>
+                    {f._id && (
+                      <button onClick={() => openPreview(f)} className="p-2 rounded bg-gray-100 hover:bg-gray-200 text-gray-900"><Eye size={16} /></button>
                     )}
                     {editingId === f._id ? (
                       <>
@@ -254,6 +302,50 @@ const MyUploads = ({ myFiles = [], onChanged }) => {
             <div className="flex justify-end gap-2">
               <button onClick={() => setConfirmId(null)} className="px-3 py-1.5 rounded bg-gray-100 hover:bg-gray-200 text-sm text-gray-900">Cancel</button>
               <button onClick={() => deleteItem(confirmId)} className="px-3 py-1.5 rounded bg-red-600 hover:bg-red-500 text-sm text-white">Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {previewOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setPreviewOpen(false)}>
+          <div className="bg-white rounded-xl shadow-2xl border border-gray-200 w-full max-w-5xl h-[80vh] flex flex-col" onClick={(e)=>e.stopPropagation()}>
+            <div className="flex items-center justify-between p-3 border-b border-gray-200 gap-2">
+              <div className="text-sm text-gray-700 truncate">Preview</div>
+              <div className="flex items-center gap-2">
+                {previewUrl && (
+                  <a href={previewUrl} target="_blank" rel="noreferrer" className="px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 text-xs text-gray-900">Open in new tab</a>
+                )}
+                {previewOriginalUrl && (
+                  <>
+                    <a href={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(previewOriginalUrl)}`} target="_blank" rel="noreferrer" className="px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 text-xs text-gray-900">Office Viewer</a>
+                    <a href={`https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(previewOriginalUrl)}`} target="_blank" rel="noreferrer" className="px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 text-xs text-gray-900">Google Viewer</a>
+                  </>
+                )}
+                <button onClick={() => setPreviewOpen(false)} className="px-3 py-1.5 rounded bg-gray-100 hover:bg-gray-200 text-sm text-gray-900">Close</button>
+              </div>
+            </div>
+            <div className="flex-1 min-h-0">
+              {previewLoading ? (
+                <div className="w-full h-full flex items-center justify-center text-sm text-gray-600">Loading preview...</div>
+              ) : previewError ? (
+                <div className="p-4 text-sm text-red-600">{previewError}</div>
+              ) : (
+                previewType.startsWith("image/") ? (
+                  <img alt="Preview" src={previewUrl} className="w-full h-full object-contain" />
+                ) : previewType === "application/pdf" || previewType.includes("pdf") ? (
+                  <iframe title="File preview" src={previewUrl} className="w-full h-full" />
+                ) : previewType.startsWith("video/") ? (
+                  <video controls className="w-full h-full"><source src={previewUrl} type={previewType} /></video>
+                ) : previewType.startsWith("audio/") ? (
+                  <audio controls className="w-full"><source src={previewUrl} type={previewType} /></audio>
+                ) : (
+                  <div className="p-4 text-sm text-gray-700">
+                    <div>This file type cannot be previewed. You can download it instead.</div>
+                    <a href={previewUrl} download className="mt-3 inline-block px-3 py-2 rounded bg-primary hover:brightness-110 text-white">Download file</a>
+                  </div>
+                )
+              )}
             </div>
           </div>
         </div>

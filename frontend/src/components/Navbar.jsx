@@ -135,9 +135,11 @@ const Navbar = () => {
               <div className="px-3 py-2 text-xs text-gray-500">Signed in as</div>
               <div className="px-3 pb-2 text-sm text-gray-900 truncate">{user?.email}</div>
               <div className="h-px bg-gray-200" />
-              <Link to="/account" className="block px-3 py-2 text-sm text-gray-900 hover:bg-gray-50" onClick={()=>setOpen(false)}>
-                Account settings
-              </Link>
+              {!(user?.role === 'admin' || user?.role === 'superadmin') && (
+                <Link to="/account" className="block px-3 py-2 text-sm text-gray-900 hover:bg-gray-50" onClick={()=>setOpen(false)}>
+                  Account settings
+                </Link>
+              )}
               <button
                 onClick={logout}
                 className="w-full text-left px-3 py-2 text-sm text-primary hover:bg-gray-50"

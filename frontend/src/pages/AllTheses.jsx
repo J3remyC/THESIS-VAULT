@@ -2,8 +2,6 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
-import FloatingShape from "../components/FloatingShape";
-import { X } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const AllTheses = () => {
@@ -11,7 +9,6 @@ const AllTheses = () => {
   const [departments, setDepartments] = useState([]);
   const [search, setSearch] = useState("");
   const [filterDept, setFilterDept] = useState("");
-  const [selected, setSelected] = useState(null);
   const [sortBy, setSortBy] = useState("hot"); // hot | new | top
   const location = useLocation();
   const navigate = useNavigate();
@@ -105,8 +102,8 @@ const AllTheses = () => {
                   </div>
                 </div>
 
-                {/* --- Thesis Cards --- */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                {/* --- StackOverflow-style List --- */}
+                <div className="divide-y divide-gray-200">
                   {files
                     .filter((f) => !filterDept || f.department === filterDept)
                     .filter((f) => {
@@ -132,24 +129,34 @@ const AllTheses = () => {
                       return hotB - hotA;
                     })
                     .map((f, i) => (
-                      <div
-                        key={i}
-                        className="p-4 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors cursor-pointer flex flex-col justify-between"
-                        onClick={() => setSelected(f)}
-                      >
-                        <div className="flex justify-between items-start">
-                          <div className="font-medium text-gray-900 line-clamp-2">{f.title}</div>
-                        </div>
-
-                        <div className="flex justify-between items-center mt-3 text-xs text-gray-500">
-                          <span>{f.author}</span>
-                          <div className="flex items-center gap-2">
-                            <span className="px-2 py-0.5 rounded bg-primary/10 text-primary">
-                              ▲ {f.upvotes || 0}
-                            </span>
-                            <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-700">
-                              ▼ {f.downvotes || 0}
-                            </span>
+                      <div key={i} className="py-4">
+                        <div className="flex gap-4">
+                          {/* Votes */}
+                          <div className="w-16 shrink-0 text-center">
+                            <div className="text-xl font-semibold text-gray-900">{(f.upvotes||0) - (f.downvotes||0)}</div>
+                            <div className="text-[10px] text-gray-500">score</div>
+                          </div>
+                          {/* Content */}
+                          <div className="flex-1 min-w-0">
+                            <button
+                              className="text-left text-base font-medium text-primary hover:underline"
+                              onClick={() => navigate(`/thesis/${f._id}`)}
+                            >
+                              {f.title}
+                            </button>
+                            <div className="mt-1 text-sm text-gray-600 line-clamp-2">{f.description || "No description."}</div>
+                            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                              {f.department && (
+                                <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-700">{f.department}</span>
+                              )}
+                              {f.course && (
+                                <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-700">{f.course}</span>
+                              )}
+                              {f.yearPublished && (
+                                <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-700">{f.yearPublished}</span>
+                              )}
+                              <span className="ml-auto text-gray-500">by {f.author || 'Unknown'}</span>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -160,121 +167,6 @@ const AllTheses = () => {
           </div>
         </div>
       </div>
-
-      {/* --- Modal --- */}
-      {selected && (
-        <div
-          className="fixed inset-0 bg-black/30 flex items-center justify-center p-6 z-50"
-          onClick={() => setSelected(null)}
-        >
-          <div
-            className="bg-white border border-gray-200 rounded-2xl w-full max-w-2xl p-6 shadow-2xl flex flex-col gap-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="flex justify-between items-center">
-              <h4 className="text-2xl font-bold text-gray-900">{selected.title}</h4>
-              <button
-                onClick={() => setSelected(null)}
-                className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-              >
-                <X className="w-5 h-5 text-gray-700" />
-              </button>
-            </div>
-
-            {/* Info Section */}
-            <div className="flex justify-between flex-wrap gap-3 text-gray-700 text-sm">
-              <p><span className="font-semibold">Author:</span> {selected.author || "—"}</p>
-              <p><span className="font-semibold">Year:</span> {selected.yearPublished || "—"}</p>
-              <p><span className="font-semibold">Department:</span> {selected.department || "—"}</p>
-            </div>
-            <p className="text-gray-500 text-sm">
-              <span className="font-semibold text-gray-700">Description:</span> {selected.description || "No description."}
-            </p>
-
-            {/* Action Buttons */}
-            <div className="flex justify-between items-center flex-wrap gap-4">
-              {/* Upvote / Downvote */}
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={async () => {
-                    try {
-                      const token = localStorage.getItem("token");
-                      const res = await fetch(`http://localhost:3000/api/upload/${selected._id}/vote`, {
-                        method: "POST",
-                        headers: {
-                          "Content-Type": "application/json",
-                          Authorization: token ? `Bearer ${token}` : undefined,
-                        },
-                        credentials: "include",
-                        body: JSON.stringify({ type: "up" }),
-                      });
-                      const data = await res.json();
-                      setSelected(data);
-                    } catch {}
-                  }}
-                  className="px-4 py-2 rounded-lg bg-primary hover:brightness-110 transition-colors text-sm font-medium text-white"
-                >
-                  ▲ Upvote
-                </button>
-                <span className="text-gray-700">{selected.upvotes || 0}</span>
-
-                <button
-                  onClick={async () => {
-                    try {
-                      const token = localStorage.getItem("token");
-                      const res = await fetch(`http://localhost:3000/api/upload/${selected._id}/vote`, {
-                        method: "POST",
-                        headers: {
-                          "Content-Type": "application/json",
-                          Authorization: token ? `Bearer ${token}` : undefined,
-                        },
-                        credentials: "include",
-                        body: JSON.stringify({ type: "down" }),
-                      });
-                      const data = await res.json();
-                      setSelected(data);
-                    } catch {}
-                  }}
-                  className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors text-sm font-medium text-gray-900"
-                >
-                  ▼ Downvote
-                </button>
-                <span className="text-gray-500">{selected.downvotes || 0}</span>
-              </div>
-
-              {/* Other Actions */}
-              <div className="flex items-center gap-2 flex-wrap">
-                {selected.url && (
-                  <a
-                    href={selected.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="px-4 py-2 rounded-lg bg-primary hover:brightness-110 text-sm font-medium transition-colors text-white"
-                  >
-                    View
-                  </a>
-                )}
-                <a
-                  href={`http://localhost:3000/api/upload/${selected._id}/download`}
-                  target="_blank"
-                  rel="noreferrer"
-                  download={selected.filename || undefined}
-                  className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-sm font-medium transition-colors text-gray-900"
-                >
-                  Download
-                </a>
-                <button
-                  onClick={() => alert("Reported.")}
-                  className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-sm font-medium transition-colors text-white"
-                >
-                  Report
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { X } from "lucide-react";
+import { useLocation } from "react-router-dom";
 
 const ThesesAll = () => {
+  const location = useLocation();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [departments, setDepartments] = useState([]);
@@ -19,11 +21,13 @@ const ThesesAll = () => {
     return { Authorization: t ? `Bearer ${t}` : undefined };
   };
 
-  const load = async () => {
+  const load = async (overrides = {}) => {
     setLoading(true);
     const params = new URLSearchParams();
-    if (department) params.set("department", department);
-    if (status) params.set("status", status);
+    const dept = overrides.department !== undefined ? overrides.department : department;
+    const st = overrides.status !== undefined ? overrides.status : status;
+    if (dept) params.set("department", dept);
+    if (st) params.set("status", st);
     const res = await fetch(`http://localhost:3000/api/admin/theses?${params.toString()}`, {
       headers: headers(),
       credentials: "include",
@@ -33,7 +37,16 @@ const ThesesAll = () => {
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    // Initialize filters from URL query if present
+    const qs = new URLSearchParams(location.search);
+    const initStatus = qs.get("status") || "";
+    const initDept = qs.get("department") || "";
+    if (initStatus) setStatus(initStatus);
+    if (initDept) setDepartment(initDept);
+    load({ status: initStatus, department: initDept });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   useEffect(() => {
     (async () => {
       try {

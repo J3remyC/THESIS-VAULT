@@ -42,6 +42,16 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   return children;
 };
 
+// Softer guard: does NOT require email verification; only checks auth and role
+const SoftProtectedRoute = ({ children, allowedRoles }) => {
+  const { isAuthenticated, user } = useAuthStore();
+  if (!isAuthenticated || !user) return <Navigate to="/login" replace />;
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
+    return <Navigate to="/" replace />;
+  }
+  return children;
+};
+
 
 // ✅ REDIRECT IF ALREADY LOGGED IN
 const RedirectAuthenticatedUser = ({ children }) => {
@@ -114,9 +124,9 @@ function App() {
         <Route
           path="/upload"
           element={
-            <ProtectedRoute allowedRoles={["student"]}>
+            <SoftProtectedRoute allowedRoles={["guest", "student"]}>
               <UploadThesis />
-            </ProtectedRoute>
+            </SoftProtectedRoute>
           }
         />
 

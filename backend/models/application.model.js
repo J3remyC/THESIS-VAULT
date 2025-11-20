@@ -5,6 +5,7 @@ const applicationSchema = new mongoose.Schema({
   lastName: { type: String, required: true },
   firstName: { type: String, required: true },
   middleInitial: { type: String },
+  studentNumber: { type: String, required: true },
   section: { type: String, required: true },
   course: { type: String, required: true }, // department code
   schoolYear: { type: String, required: true },

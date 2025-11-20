@@ -8,8 +8,8 @@ const router = express.Router();
 // Submit student application
 router.post("/", verifyToken, async (req, res) => {
   try {
-    const { lastName, firstName, middleInitial, section, course, schoolYear } = req.body;
-    if (!lastName || !firstName || !section || !course || !schoolYear) {
+    const { lastName, firstName, middleInitial, studentNumber, section, course, schoolYear } = req.body;
+    if (!lastName || !firstName || !studentNumber || !section || !course || !schoolYear) {
       return res.status(400).json({ message: "Missing required fields" });
     }
     const dep = await Department.findOne({ code: course });
@@ -23,6 +23,7 @@ router.post("/", verifyToken, async (req, res) => {
       lastName,
       firstName,
       middleInitial: middleInitial || "",
+      studentNumber,
       section,
       course,
       schoolYear,

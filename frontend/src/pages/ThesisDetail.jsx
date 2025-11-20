@@ -3,6 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import { useAuthStore } from "../store/authStore";
+import { ArrowLeft, ExternalLink, Download as DownloadIcon, Home, Folder, BookOpen, Files as FilesIcon, BarChart3, Copy } from "lucide-react";
+import { toast } from "react-hot-toast";
 
 const ThesisDetail = () => {
   const { id } = useParams();
@@ -12,6 +14,13 @@ const ThesisDetail = () => {
   const [thesis, setThesis] = useState(null);
   const [activeTab, setActiveTab] = useState("overview");
   const { user } = useAuthStore();
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState("");
+  const [previewType, setPreviewType] = useState("");
+  const [previewOriginalUrl, setPreviewOriginalUrl] = useState("");
+  const [chooserOpen, setChooserOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -36,6 +45,90 @@ const ThesisDetail = () => {
     load();
     return () => { active = false; };
   }, [id]);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl && previewUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
+  const openPreview = async () => {
+    if (!thesis) return;
+    setPreviewError("");
+    setPreviewLoading(true);
+    setPreviewOpen(true);
+    try {
+      // Prefer fetching via API with auth, then render as object URL
+      const token = localStorage.getItem("token");
+      const res = await fetch(`http://localhost:3000/api/upload/${thesis._id}/download`, {
+        headers: { Authorization: token ? `Bearer ${token}` : undefined },
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const blob = await res.blob();
+      const type = res.headers.get("Content-Type") || blob.type || "";
+      const url = URL.createObjectURL(blob);
+      if (previewUrl && previewUrl.startsWith("blob:")) URL.revokeObjectURL(previewUrl);
+      setPreviewType(type);
+      setPreviewUrl(url);
+      setPreviewOriginalUrl(thesis?.url || "");
+    } catch (e) {
+      const token = localStorage.getItem("token");
+      // 2) Try server-side converted preview (PDF)
+      try {
+        const res2 = await fetch(`http://localhost:3000/api/upload/${thesis._id}/preview`, {
+          headers: { Authorization: token ? `Bearer ${token}` : undefined },
+          credentials: "include",
+        });
+        if (!res2.ok) throw new Error("preview failed");
+        const blob2 = await res2.blob();
+        const type2 = res2.headers.get("Content-Type") || blob2.type || "application/pdf";
+        const url2 = URL.createObjectURL(blob2);
+        if (previewUrl && previewUrl.startsWith("blob:")) URL.revokeObjectURL(previewUrl);
+        setPreviewType(type2);
+        setPreviewUrl(url2);
+        setPreviewOriginalUrl(thesis?.url || "");
+        setPreviewError("");
+        return;
+      } catch {}
+
+      // 3) Try signed public preview URL and embed Google viewer
+      try {
+        const res3 = await fetch(`http://localhost:3000/api/upload/${thesis._id}/signed-preview-url`, {
+          headers: { Authorization: token ? `Bearer ${token}` : undefined },
+          credentials: "include",
+        });
+        if (res3.ok) {
+          const data = await res3.json();
+          const signed = data?.url || "";
+          if (signed) {
+            const gview = `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(signed)}`;
+            setPreviewType("text/html");
+            setPreviewUrl(gview);
+            setPreviewOriginalUrl(signed);
+            setPreviewError("");
+            return;
+          }
+        }
+      } catch {}
+
+      // 4) Fallback: use direct file URL if available
+      if (thesis?.url) {
+        const ext = (thesis.url.split(".").pop() || "").toLowerCase();
+        const guessed = ext === 'pdf' ? 'application/pdf' : ext.match(/png|jpe?g|webp|gif/) ? `image/${ext==='jpg'?'jpeg':ext}` : '';
+        setPreviewType(guessed);
+        setPreviewUrl(thesis.url);
+        setPreviewOriginalUrl(thesis.url);
+        setPreviewError("");
+      } else {
+        setPreviewError("Failed to load preview. Try downloading instead.");
+      }
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
 
   const score = useMemo(() => {
     if (!thesis) return 0;
@@ -82,12 +175,123 @@ const ThesisDetail = () => {
             <div className="max-w-6xl mx-auto p-6 space-y-6">
               {/* Breadcrumbs */}
               <div className="text-sm text-gray-500 flex items-center gap-2">
-                <button onClick={() => navigate("/")} className="hover:text-gray-700">Home</button>
+                <button onClick={() => navigate("/")} className="hover:text-gray-700 flex items-center gap-1">
+                  <Home className="w-4 h-4" />
+                  <span>Home</span>
+                </button>
                 <span>/</span>
-                <button onClick={() => navigate("/theses")} className="hover:text-gray-700">Theses</button>
+                <button onClick={() => navigate("/theses")} className="hover:text-gray-700 flex items-center gap-1">
+                  <Folder className="w-4 h-4" />
+                  <span>Theses</span>
+                </button>
                 <span>/</span>
                 <span className="text-gray-700 truncate max-w-[50ch]">{thesis?.title || "Thesis"}</span>
               </div>
+            {previewOpen && (
+              <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setPreviewOpen(false)}>
+                <div className="bg-white rounded-xl shadow-2xl border border-gray-200 w-full max-w-5xl h-[80vh] flex flex-col" onClick={(e)=>e.stopPropagation()}>
+                  <div className="flex items-center justify-between p-3 border-b border-gray-200 gap-2">
+                    <div className="text-sm text-gray-700 truncate">Preview</div>
+                    <div className="flex items-center gap-2">
+                      {previewUrl && (
+                        <a href={previewUrl} target="_blank" rel="noreferrer" className="px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 text-xs text-gray-900">Open in new tab</a>
+                      )}
+                      {previewOriginalUrl && (
+                        <>
+                          <a href={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(previewOriginalUrl)}`} target="_blank" rel="noreferrer" className="px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 text-xs text-gray-900">Office Viewer</a>
+                          <a href={`https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(previewOriginalUrl)}`} target="_blank" rel="noreferrer" className="px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 text-xs text-gray-900">Google Viewer</a>
+                        </>
+                      )}
+                      <button onClick={() => setPreviewOpen(false)} className="px-3 py-1.5 rounded bg-gray-100 hover:bg-gray-200 text-sm text-gray-900">Close</button>
+                    </div>
+                  </div>
+                  <div className="flex-1 min-h-0">
+                    {previewLoading ? (
+                      <div className="w-full h-full flex items-center justify-center text-sm text-gray-600">Loading preview...</div>
+                    ) : previewError ? (
+                      <div className="p-4 text-sm text-red-600">{previewError}</div>
+                    ) : (
+                      previewType.startsWith("image/") ? (
+                        <img alt="Preview" src={previewUrl} className="w-full h-full object-contain" />
+                      ) : previewType === "application/pdf" || previewType.includes("pdf") ? (
+                        <iframe title="Thesis preview" src={previewUrl} className="w-full h-full" />
+                      ) : previewType.startsWith("video/") ? (
+                        <video controls className="w-full h-full"><source src={previewUrl} type={previewType} /></video>
+                      ) : previewType.startsWith("audio/") ? (
+                        <audio controls className="w-full"><source src={previewUrl} type={previewType} /></audio>
+                      ) : (
+                        <div className="p-4 text-sm text-gray-700">
+                          <div>This file type cannot be previewed. You can download it instead.</div>
+                          <a href={previewUrl} download className="mt-3 inline-block px-3 py-2 rounded bg-primary hover:brightness-110 text-white">Download file</a>
+                        </div>
+                      )
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {chooserOpen && (
+              <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setChooserOpen(false)}>
+                <div className="bg-white rounded-xl shadow-2xl border border-gray-200 w-full max-w-md p-5" onClick={(e)=>e.stopPropagation()}>
+                  <div className="text-lg font-semibold mb-2 text-gray-900">Choose a viewer</div>
+                  <div className="text-sm text-gray-600 mb-4">How would you like to view this thesis?</div>
+                  <div className="grid grid-cols-1 gap-2">
+                    <button
+                      onClick={async () => {
+                        setChooserOpen(false);
+                        const token = localStorage.getItem("token");
+                        let url = thesis?.url || "";
+                        try {
+                          const res = await fetch(`http://localhost:3000/api/upload/${thesis?._id}/signed-preview-url`, {
+                            headers: { Authorization: token ? `Bearer ${token}` : undefined },
+                            credentials: 'include'
+                          });
+                          if (res.ok) {
+                            const data = await res.json();
+                            if (data?.url) url = data.url;
+                          }
+                        } catch {}
+                        if (url) {
+                          const officeUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`;
+                          window.open(officeUrl, '_blank', 'noopener');
+                        }
+                      }}
+                      className="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 text-sm text-gray-900"
+                    >
+                      Microsoft Office Viewer (docx, pptx, xlsx)
+                    </button>
+                    <button
+                      onClick={async () => {
+                        setChooserOpen(false);
+                        const token = localStorage.getItem("token");
+                        let url = thesis?.url || "";
+                        try {
+                          const res = await fetch(`http://localhost:3000/api/upload/${thesis?._id}/signed-preview-url`, {
+                            headers: { Authorization: token ? `Bearer ${token}` : undefined },
+                            credentials: 'include'
+                          });
+                          if (res.ok) {
+                            const data = await res.json();
+                            if (data?.url) url = data.url;
+                          }
+                        } catch {}
+                        if (url) {
+                          const gview = `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(url)}`;
+                          window.open(gview, '_blank', 'noopener');
+                        }
+                      }}
+                      className="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 text-sm text-gray-900"
+                    >
+                      Google Viewer (Office/PDF)
+                    </button>
+                  </div>
+                  <div className="mt-4 flex justify-end">
+                    <button onClick={() => setChooserOpen(false)} className="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 text-sm text-gray-900">Close</button>
+                  </div>
+                </div>
+              </div>
+            )}
 
               {/* Repo-like header */}
               <div className="flex items-center justify-between">
@@ -95,25 +299,45 @@ const ThesisDetail = () => {
                   <h1 className="text-2xl font-semibold truncate">{thesis?.title || "Thesis"}</h1>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button onClick={() => navigate(-1)} className="px-3 py-1.5 text-sm rounded bg-gray-100 hover:bg-gray-200 text-gray-900">Back</button>
-                  {thesis?.url && (
-                    <a
-                      href={thesis.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="px-3 py-1.5 text-sm rounded bg-primary hover:brightness-110 text-white"
+                  <button
+                    onClick={() => navigate(-1)}
+                    aria-label="Back"
+                    title="Back"
+                    className="p-2 rounded bg-gray-100 hover:bg-gray-200 text-gray-900"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      const url = `${window.location.origin}/thesis/${thesis?._id || id}`;
+                      navigator.clipboard.writeText(url).then(() => toast.success("Link copied"));
+                    }}
+                    aria-label="Copy link"
+                    title="Copy link"
+                    className="p-2 rounded bg-gray-100 hover:bg-gray-200 text-gray-900"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
+                  {thesis?._id && (
+                    <button
+                      onClick={() => setChooserOpen(true)}
+                      aria-label="View"
+                      title="View"
+                      className="p-2 rounded bg-primary hover:brightness-110 text-white"
                     >
-                      View
-                    </a>
+                      <ExternalLink className="w-4 h-4" />
+                    </button>
                   )}
                   {thesis?._id && (
                     <a
                       href={`http://localhost:3000/api/upload/${thesis._id}/download`}
                       target="_blank"
                       rel="noreferrer"
-                      className="px-3 py-1.5 text-sm rounded bg-gray-100 hover:bg-gray-200 text-gray-900"
+                      aria-label="Download"
+                      title="Download"
+                      className="p-2 rounded bg-gray-100 hover:bg-gray-200 text-gray-900"
                     >
-                      Download
+                      <DownloadIcon className="w-4 h-4" />
                     </a>
                   )}
                 </div>
@@ -125,25 +349,28 @@ const ThesisDetail = () => {
                   role="tab"
                   aria-selected={activeTab === "overview"}
                   onClick={() => setActiveTab("overview")}
-                  className={`py-2 ${activeTab === "overview" ? "border-b-2 border-primary text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+                  className={`py-2 flex items-center gap-1 ${activeTab === "overview" ? "border-b-2 border-primary text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
                 >
-                  Overview
+                  <BookOpen className="w-4 h-4" />
+                  <span>Overview</span>
                 </button>
                 <button
                   role="tab"
                   aria-selected={activeTab === "files"}
                   onClick={() => setActiveTab("files")}
-                  className={`py-2 ${activeTab === "files" ? "border-b-2 border-primary text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+                  className={`py-2 flex items-center gap-1 ${activeTab === "files" ? "border-b-2 border-primary text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
                 >
-                  Files
+                  <FilesIcon className="w-4 h-4" />
+                  <span>Files</span>
                 </button>
                 <button
                   role="tab"
                   aria-selected={activeTab === "insights"}
                   onClick={() => setActiveTab("insights")}
-                  className={`py-2 ${activeTab === "insights" ? "border-b-2 border-primary text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+                  className={`py-2 flex items-center gap-1 ${activeTab === "insights" ? "border-b-2 border-primary text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
                 >
-                  Insights
+                  <BarChart3 className="w-4 h-4" />
+                  <span>Insights</span>
                 </button>
               </div>
 
@@ -188,11 +415,15 @@ const ThesisDetail = () => {
                           <div className="text-xs text-gray-500">{thesis?.format || thesis?.resourceType || "file"}</div>
                         </div>
                         <div className="flex items-center gap-2">
-                          {thesis?.url && (
-                            <a href={thesis.url} target="_blank" rel="noreferrer" className="px-3 py-1.5 text-sm rounded bg-primary hover:brightness-110 text-white">View</a>
+                          {thesis?._id && (
+                            <button onClick={() => setChooserOpen(true)} aria-label="View" title="View" className="p-2 rounded bg-primary hover:brightness-110 text-white">
+                              <ExternalLink className="w-4 h-4" />
+                            </button>
                           )}
                           {thesis?._id && (
-                            <a href={`http://localhost:3000/api/upload/${thesis._id}/download`} target="_blank" rel="noreferrer" className="px-3 py-1.5 text-sm rounded bg-gray-100 hover:bg-gray-200 text-gray-900">Download</a>
+                            <a href={`http://localhost:3000/api/upload/${thesis._id}/download`} target="_blank" rel="noreferrer" aria-label="Download" title="Download" className="p-2 rounded bg-gray-100 hover:bg-gray-200 text-gray-900">
+                              <DownloadIcon className="w-4 h-4" />
+                            </a>
                           )}
                         </div>
                       </div>

@@ -28,10 +28,12 @@ const AdminSidebar = ({ user }) => {
       </Section>
       <Section title="User Management">
         <Item to="/admin-dashboard/users" label="View All Users" />
-        <Item to="/admin-dashboard/users/new" label="Add New User" />
-        <Item to="/admin-dashboard/applications" label="Applications" />
         {user?.role === "superadmin" && (
-          <Item to="/admin-dashboard/manage-roles" label="Manage Roles" />
+          <>
+            <Item to="/admin-dashboard/users/new" label="Add New User" />
+            <Item to="/admin-dashboard/applications" label="Applications" />
+            <Item to="/admin-dashboard/manage-roles" label="Manage Roles" />
+          </>
         )}
       </Section>
       <Section title="Thesis Management">
@@ -40,8 +42,12 @@ const AdminSidebar = ({ user }) => {
         <Item to="/admin-dashboard/theses/trash" label="Trash Bin" />
       </Section>
       <Section title="System Settings">
-        <Item to="/admin-dashboard/departments" label="Departments" />
-        <Item to="/admin-dashboard/departments/theses" label="Department Theses" />
+        {user?.role === "superadmin" && (
+          <>
+            <Item to="/admin-dashboard/departments" label="Departments" />
+            <Item to="/admin-dashboard/departments/theses" label="Department Theses" />
+          </>
+        )}
       </Section>
       <Section title="Activity">
         <Item to="/admin-dashboard/logs" label="Activity Logs" />

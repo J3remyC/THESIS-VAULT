@@ -4,9 +4,11 @@ import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import UploadDropzone from "../components/UploadDropzone";
 import { useAuthStore } from "../store/authStore";
+import { useNavigate } from "react-router-dom";
 
 const UploadThesis = () => {
   const { user, uploadFile } = useAuthStore();
+  const navigate = useNavigate();
   const [file, setFile] = useState(null);
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
@@ -18,6 +20,7 @@ const UploadThesis = () => {
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [uploadedURL, setUploadedURL] = useState("");
+  const [approvedApp, setApprovedApp] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -32,6 +35,39 @@ const UploadThesis = () => {
       } catch {}
     })();
   }, []);
+
+  // Load my applications and prefill defaults from the latest approved one
+  useEffect(() => {
+    (async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch("http://localhost:3000/api/applications/mine", {
+          headers: { Authorization: token ? `Bearer ${token}` : undefined },
+          credentials: "include",
+        });
+        const list = await res.json();
+        const approved = (Array.isArray(list) ? list : []).find((a) => a.status === "approved");
+        if (approved) {
+          setApprovedApp(approved);
+          // Author from student name
+          const authorName = `${approved.firstName || ""}${approved.middleInitial ? " " + approved.middleInitial + "." : ""} ${approved.lastName || ""}`.trim();
+          setAuthor((prev) => prev || authorName);
+          // Year from schoolYear (first year)
+          const m = /^([0-9]{4})-/.exec(approved.schoolYear || "");
+          if (m) setYear((prev) => prev || m[1]);
+          // Default department to course code
+          if (approved.course) setDepartment((prev) => prev || approved.course);
+        }
+      } catch {}
+    })();
+  }, []);
+
+  // Keep 'course' input synced with selected department's name
+  useEffect(() => {
+    if (!department || !Array.isArray(departments) || departments.length === 0) return;
+    const dep = departments.find((d) => (d.code || "") === department);
+    if (dep) setCourse(dep.name || "");
+  }, [department, departments]);
 
   const handleUpload = async (e) => {
     e.preventDefault();
@@ -67,8 +103,38 @@ const UploadThesis = () => {
 
   if (user?.role !== "student") {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-white text-gray-700">
-        Uploading is available to students only.
+      <div className="fixed inset-0 text-gray-900 bg-white">
+        <div className="relative z-10 flex flex-col h-full">
+          <Navbar />
+          <div className="flex flex-1 min-h-0">
+            <Sidebar />
+            <div className="flex-1 min-w-0 overflow-y-auto">
+              {/* Gate modal overlay */}
+              <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => navigate(-1)}>
+                <div className="bg-white rounded-xl shadow-2xl border border-gray-200 w-full max-w-md p-6" onClick={(e)=>e.stopPropagation()}>
+                  <div className="text-lg font-semibold mb-2">Uploading restricted</div>
+                  <div className="text-sm text-gray-600 mb-4">
+                    Only verified students are allowed to upload files and create repositories.
+                  </div>
+                  <div className="flex items-center justify-end gap-2">
+                    <button
+                      onClick={() => navigate(-1)}
+                      className="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 text-sm text-gray-900"
+                    >
+                      Back
+                    </button>
+                    <button
+                      onClick={() => navigate("/account")}
+                      className="px-3 py-2 rounded bg-primary hover:brightness-110 text-white text-sm"
+                    >
+                      Verify now
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -96,7 +162,7 @@ const UploadThesis = () => {
                   <select className="p-2 rounded bg-white text-gray-900 border border-gray-300 md:col-span-2" value={department} onChange={(e)=>setDepartment(e.target.value)} required>
                     <option value="" disabled>Select Course (by Code)</option>
                     {departments.map((d)=> (
-                      <option key={d._id} value={d.code || d.name}>{(d.code?d.code:"").toUpperCase()} — {d.name}</option>
+                      <option key={d._id} value={d.code || ""}>{(d.code?d.code:"").toUpperCase()}</option>
                     ))}
                   </select>
                   <div className="md:col-span-2">

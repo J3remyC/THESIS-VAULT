@@ -81,6 +81,10 @@ const UsersList = () => {
       let options = { method: 'PATCH', headers: headers(), credentials: 'include' };
       if (action === 'ban') {
         const reason = prompt(`Enter ban reason for ${u.email} (optional):`, "");
+        if (reason === null) {
+          // User pressed cancel; do not proceed with ban
+          return;
+        }
         options = {
           method: 'PATCH',
           headers: { ...headers(), 'Content-Type': 'application/json' },
@@ -109,6 +113,22 @@ const UsersList = () => {
   if (loading) return <div className="p-4 text-sm text-gray-500">Loading users...</div>;
 
   const filtered = users.filter(u => (!role || u.role === role) && (!q || `${u.name} ${u.email}`.toLowerCase().includes(q.toLowerCase())));
+
+  // Validation: disable Save when text-only fields have numbers or when number-only field has letters
+  const textOnly = (s) => /^[A-Za-z .'-]*$/.test(s || "");
+  const singleLetterOrEmpty = (s) => !s || /^[A-Za-z]$/.test(s);
+  const schoolYearValid = (s) => {
+    const m = /^(\d{4})-(\d{4})$/.exec(s || "");
+    if (!m) return false;
+    const y1 = parseInt(m[1], 10);
+    const y2 = parseInt(m[2], 10);
+    return y2 === y1 + 1;
+  };
+  const isStudent = editing?.role === 'student';
+  const isInvalid = !!editing && (
+    !textOnly(editForm.name) ||
+    (isStudent && (!textOnly(editForm.lastName) || !textOnly(editForm.firstName) || !singleLetterOrEmpty(editForm.middleInitial) || !schoolYearValid(editForm.schoolYear)))
+  );
 
   return (
     <div className="p-4">
@@ -225,7 +245,7 @@ const UsersList = () => {
             </div>
             <div className="mt-4 flex justify-end gap-2">
               <button onClick={()=>setEditing(null)} className="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 text-sm text-gray-900">Cancel</button>
-              <button onClick={saveEdit} disabled={busyId===editing._id} className="px-3 py-2 rounded bg-primary hover:brightness-110 text-sm text-white disabled:opacity-60">Save</button>
+              <button onClick={saveEdit} disabled={busyId===editing._id || isInvalid} className="px-3 py-2 rounded bg-primary hover:brightness-110 text-sm text-white disabled:opacity-60">Save</button>
             </div>
           </div>
         </div>

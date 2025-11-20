@@ -34,9 +34,16 @@ router.post("/", verifyToken, authorizeRoles("student", "admin", "superadmin"), 
     if (!dep) return res.status(400).json({ message: "Invalid department code" });
 
     const fileBase64 = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
+    // Decide Cloudinary resource_type: PDFs and documents should be 'raw'
+    const mime = (req.file.mimetype || "").toLowerCase();
+    let resourceType = "raw"; // default to raw for safety
+    if (mime.startsWith("image/")) resourceType = "image";
+    else if (mime.startsWith("video/")) resourceType = "video";
+    else resourceType = "raw"; // pdf, docx, pptx, etc.
+
     const result = await cloudinary.uploader.upload(fileBase64, {
       folder: "uploads",
-      resource_type: "auto",
+      resource_type: resourceType,
       use_filename: true,
       unique_filename: false,
       filename_override: req.file.originalname,
@@ -163,21 +170,36 @@ router.patch("/:id", verifyToken, async (req, res) => {
   }
 });
 
-// ✅ Delete own upload
+// ✅ Delete own upload (permanent: Cloudinary + MongoDB)
 router.delete("/:id", verifyToken, async (req, res) => {
   try {
     const file = await File.findById(req.params.id);
     if (!file) return res.status(404).json({ message: "Not found" });
     if (String(file.uploadedBy) !== String(req.user._id)) return res.status(403).json({ message: "Forbidden" });
 
-    await File.findByIdAndUpdate(req.params.id, { trashed: true, trashedAt: new Date() }, { new: true });
+    // Delete from Cloudinary if we have a publicId
+    if (file.publicId) {
+      try {
+        await cloudinary.uploader.destroy(file.publicId, { resource_type: file.resourceType || "raw" });
+      } catch (e) {
+        // proceed even if cloud deletion fails, but report
+        console.warn("Cloudinary destroy failed", e?.message || e);
+      }
+    }
+
+    // Delete from MongoDB
+    await File.findByIdAndDelete(req.params.id);
+
+    // Log
     await ActivityLog.create({
       actor: req.user._id,
-      action: "TRASH_THESIS",
+      action: "DELETE_THESIS",
       details: { fileId: req.params.id, title: file.title },
     });
-    res.json({ message: "Moved to trash" });
+
+    res.json({ message: "Deleted from Cloudinary and database" });
   } catch (err) {
+    console.error("Permanent delete failed", err);
     res.status(500).json({ message: "Failed to delete file" });
   }
 });
@@ -197,10 +219,51 @@ router.get("/logs/mine", verifyToken, async (req, res) => {
   try {
     const logs = await ActivityLog.find({ actor: req.user._id })
       .sort({ createdAt: -1 })
-      .limit(200);
-    res.json(logs);
+      .limit(200)
+      .lean();
+    const enhanced = await Promise.all(
+      logs.map(async (l) => {
+        const out = { ...l };
+        const fid = l?.details?.fileId;
+        if (fid) {
+          try {
+            const f = await File.findById(fid).select("_id title filename url status trashed").lean();
+            if (f) out.details = { ...l.details, fileInfo: f };
+            else out.details = { ...l.details, fileMissing: true };
+          } catch {
+            out.details = { ...l.details, fileMissing: true };
+          }
+        }
+        return out;
+      })
+    );
+    res.json(enhanced);
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch logs" });
+  }
+});
+
+// ✅ Signed preview URL for Google/Office viewers
+router.get("/:id/signed-preview-url", verifyToken, async (req, res) => {
+  try {
+    const file = await File.findById(req.params.id);
+    if (!file) return res.status(404).json({ message: "Not found" });
+
+    // Prefer constructing from publicId to guarantee correct resource_type path (important for PDFs)
+    if (file.publicId) {
+      const url = cloudinary.url(file.publicId, {
+        resource_type: file.resourceType || "raw",
+        secure: true,
+      });
+      return res.json({ url });
+    }
+
+    // Fallback to stored URL if no publicId
+    if (file.url) return res.json({ url: file.url });
+
+    return res.status(400).json({ message: "No URL available" });
+  } catch (e) {
+    res.status(500).json({ message: "Failed to create signed URL" });
   }
 });
 
@@ -212,10 +275,10 @@ router.get("/:id/download", async (req, res) => {
 
     const original = file.filename || "file";
 
-    // If we have a Cloudinary publicId, generate an attachment URL via SDK
+    // If we have a Cloudinary publicId, redirect to a proper attachment URL with correct resource_type
     if (file.publicId) {
       const url = cloudinary.url(file.publicId, {
-        resource_type: file.resourceType || "auto",
+        resource_type: file.resourceType || "raw",
         flags: "attachment",
         filename: original,
         secure: true,
@@ -223,20 +286,11 @@ router.get("/:id/download", async (req, res) => {
       return res.redirect(302, url);
     }
 
-    // Fallback: stream with explicit headers
-    const ext = path.extname(original).toLowerCase();
-    let mime = "application/octet-stream";
-    if (ext === ".pdf") mime = "application/pdf";
-    else if (ext === ".docx") mime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-    else if (ext === ".doc") mime = "application/msword";
+    // Fallback: redirect to stored secure URL
+    if (file.url) return res.redirect(302, file.url);
 
-    res.setHeader("Content-Type", mime);
-    res.setHeader("Content-Disposition", `attachment; filename="${original}"`);
-
-    const r = await fetch(file.url);
-    if (!r.ok || !r.body) return res.status(502).json({ message: "Upstream download failed" });
-    const nodeStream = typeof Readable.fromWeb === "function" && r.body?.getReader ? Readable.fromWeb(r.body) : r.body;
-    nodeStream.pipe(res);
+    // If neither is available, error
+    return res.status(404).json({ message: "Source URL not available" });
   } catch (err) {
     console.error("Download error", err);
     res.status(500).json({ message: "Failed to download" });
