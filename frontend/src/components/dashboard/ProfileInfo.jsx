@@ -63,6 +63,12 @@ const ProfileInfo = ({ user }) => {
             {role === 'student' && (
               <span className="px-2 py-0.5 rounded text-xs bg-primary/10 text-primary">Student</span>
             )}
+            {role === 'guest' && (
+              <>
+                <span className="px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-700">Guest</span>
+                <span className="px-2 py-0.5 rounded text-xs bg-amber-100 text-amber-700">Unverified</span>
+              </>
+            )}
             {approvedApp && (
               <span className="px-2 py-0.5 rounded text-xs bg-emerald-100 text-emerald-700">Verified Student</span>
             )}
@@ -87,18 +93,18 @@ const ProfileInfo = ({ user }) => {
         </div>
       </div>
 
-      <div className="mt-3 p-3 rounded-lg border border-gray-200 bg-white">
+      <div className="mt-3">
         <div className="text-xs text-gray-500 mb-2">Account Stats</div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div>
+          <div className="p-3 rounded-lg border border-gray-200 bg-white">
             <div className="text-xs text-gray-500">Member since</div>
             <div className="text-sm text-gray-900">{memberSince}</div>
           </div>
-          <div>
+          <div className="p-3 rounded-lg border border-gray-200 bg-white">
             <div className="text-xs text-gray-500">Last login</div>
             <div className="text-sm text-gray-900">{lastLogin || '—'}</div>
           </div>
-          <div>
+          <div className="p-3 rounded-lg border border-gray-200 bg-white">
             <div className="text-xs text-gray-500">Uploads</div>
             <div className="text-sm text-gray-900">{uploadsCount}</div>
           </div>

@@ -6,6 +6,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 const Navbar = () => {
   const { user, logout } = useAuthStore();
   const [open, setOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -35,11 +36,22 @@ const Navbar = () => {
         const list = Array.isArray(data) ? data : [];
         const ql = q.toLowerCase();
         const filtered = list
-          .filter((f) =>
-            (f.title || "").toLowerCase().includes(ql) ||
-            (f.author || "").toLowerCase().includes(ql) ||
-            (f.course || "").toLowerCase().includes(ql)
-          )
+          .filter((f) => {
+            const title = (f.title || "").toLowerCase();
+            const author = (f.author || "").toLowerCase();
+            const course = (f.course || "").toLowerCase();
+            const dept = (f.department || "").toLowerCase();
+            const year = (f.yearPublished ? String(f.yearPublished) : "").toLowerCase();
+            const desc = (f.description || "").toLowerCase();
+            return (
+              title.includes(ql) ||
+              author.includes(ql) ||
+              course.includes(ql) ||
+              dept.includes(ql) ||
+              year.includes(ql) ||
+              desc.includes(ql)
+            );
+          })
           .slice(0, 6);
         setSuggestions(filtered);
       } catch {
@@ -141,7 +153,10 @@ const Navbar = () => {
                 </Link>
               )}
               <button
-                onClick={logout}
+                onClick={() => {
+                  setOpen(false);
+                  setShowLogoutConfirm(true);
+                }}
                 className="w-full text-left px-3 py-2 text-sm text-primary hover:bg-gray-50"
               >
                 Logout
@@ -150,6 +165,31 @@ const Navbar = () => {
           )}
         </div>
       </div>
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-lg shadow-lg max-w-sm w-full mx-4 p-5">
+            <h2 className="text-base font-semibold text-gray-900 mb-2">Confirm logout</h2>
+            <p className="text-sm text-gray-600 mb-4">Are you sure you want to log out?</p>
+            <div className="flex justify-end gap-2 text-sm">
+              <button
+                className="px-3 py-1.5 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                onClick={() => setShowLogoutConfirm(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-3 py-1.5 rounded-md bg-primary text-white hover:brightness-110"
+                onClick={() => {
+                  setShowLogoutConfirm(false);
+                  logout();
+                }}
+              >
+                Yes, log out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 };

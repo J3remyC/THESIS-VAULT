@@ -10,6 +10,8 @@ const AllTheses = () => {
   const [search, setSearch] = useState("");
   const [filterDept, setFilterDept] = useState("");
   const [sortBy, setSortBy] = useState("hot"); // hot | new | top
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -28,6 +30,7 @@ const AllTheses = () => {
     const initialDept = sp.get("dept") || "";
     setSearch(initialQ);
     setFilterDept(initialDept);
+    setPage(1);
   }, [location.search]);
 
   useEffect(() => {
@@ -44,6 +47,57 @@ const AllTheses = () => {
       } catch {}
     })();
   }, []);
+
+  const filteredFiles = files
+    .filter((f) => !filterDept || f.department === filterDept)
+    .filter((f) => {
+      const q = search.trim().toLowerCase();
+      if (!q) return true;
+      const title = (f.title || "").toLowerCase();
+      const author = (f.author || "").toLowerCase();
+      const course = (f.course || "").toLowerCase();
+      const dept = (f.department || "").toLowerCase();
+      const year = (f.yearPublished ? String(f.yearPublished) : "").toLowerCase();
+      const desc = (f.description || "").toLowerCase();
+      return (
+        title.includes(q) ||
+        author.includes(q) ||
+        course.includes(q) ||
+        dept.includes(q) ||
+        year.includes(q) ||
+        desc.includes(q)
+      );
+    })
+    .sort((a, b) => {
+      const scoreA = (a.upvotes || 0) - (a.downvotes || 0);
+      const scoreB = (b.upvotes || 0) - (b.downvotes || 0);
+      if (sortBy === "top") return scoreB - scoreA;
+      if (sortBy === "new")
+        return (
+          new Date(b.createdAt).getTime() -
+          new Date(a.createdAt).getTime()
+        );
+      const now = Date.now();
+      const ageA = Math.max(
+        1,
+        (now - new Date(a.createdAt).getTime()) / 36e5
+      );
+      const ageB = Math.max(
+        1,
+        (now - new Date(b.createdAt).getTime()) / 36e5
+      );
+      const hotA = scoreA / Math.pow(ageA + 2, 1.5);
+      const hotB = scoreB / Math.pow(ageB + 2, 1.5);
+      return hotB - hotA;
+    });
+
+  const totalPages = Math.max(1, Math.ceil(filteredFiles.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const pagedFiles = filteredFiles.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, filterDept, sortBy]);
 
   // Reflect search and filter to URL (replace state)
   useEffect(() => {
@@ -81,12 +135,6 @@ const AllTheses = () => {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <input
-                      className="p-2 rounded bg-white border border-gray-300 text-sm text-gray-900 placeholder:text-gray-400"
-                      placeholder="Search title/author/course"
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                    />
                     <select
                       className="p-2 rounded bg-white border border-gray-300 text-sm text-gray-900"
                       value={filterDept}
@@ -104,31 +152,8 @@ const AllTheses = () => {
 
                 {/* --- StackOverflow-style List --- */}
                 <div className="divide-y divide-gray-200">
-                  {files
-                    .filter((f) => !filterDept || f.department === filterDept)
-                    .filter((f) => {
-                      const q = search.trim().toLowerCase();
-                      if (!q) return true;
-                      return (
-                        (f.title || "").toLowerCase().includes(q) ||
-                        (f.author || "").toLowerCase().includes(q) ||
-                        (f.course || "").toLowerCase().includes(q)
-                      );
-                    })
-                    .sort((a, b) => {
-                      const scoreA = (a.upvotes || 0) - (a.downvotes || 0);
-                      const scoreB = (b.upvotes || 0) - (b.downvotes || 0);
-                      if (sortBy === "top") return scoreB - scoreA;
-                      if (sortBy === "new") return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-                      // hot ranking approximation
-                      const now = Date.now();
-                      const ageA = Math.max(1, (now - new Date(a.createdAt).getTime()) / 36e5); // hours
-                      const ageB = Math.max(1, (now - new Date(b.createdAt).getTime()) / 36e5);
-                      const hotA = scoreA / Math.pow(ageA + 2, 1.5);
-                      const hotB = scoreB / Math.pow(ageB + 2, 1.5);
-                      return hotB - hotA;
-                    })
-                    .map((f, i) => (
+                  {filteredFiles.length > 0 ? (
+                    pagedFiles.map((f, i) => (
                       <div key={i} className="py-4">
                         <div className="flex gap-4">
                           {/* Votes */}
@@ -144,7 +169,7 @@ const AllTheses = () => {
                             >
                               {f.title}
                             </button>
-                            <div className="mt-1 text-sm text-gray-600 line-clamp-2">{f.description || "No description."}</div>
+                            <div className="mt-1 text-sm text-gray-600 line-clamp-2 break-words">{f.description || "No description."}</div>
                             <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
                               {f.department && (
                                 <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-700">{f.department}</span>
@@ -160,8 +185,37 @@ const AllTheses = () => {
                           </div>
                         </div>
                       </div>
-                    ))}
+                    ))
+                  ) : (
+                    <div className="py-8 text-center text-sm text-gray-500">
+                      No theses found.
+                    </div>
+                  )}
                 </div>
+
+                {filteredFiles.length > pageSize && (
+                  <div className="mt-4 flex items-center justify-between text-sm text-gray-700">
+                    <div>
+                      Page {currentPage} of {totalPages}
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        className="px-3 py-1 rounded border border-gray-300 bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                      >
+                        Previous
+                      </button>
+                      <button
+                        className="px-3 py-1 rounded border border-gray-300 bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
               </motion.div>
             </div>
           </div>

@@ -21,6 +21,14 @@ const ThesisDetail = () => {
   const [previewType, setPreviewType] = useState("");
   const [previewOriginalUrl, setPreviewOriginalUrl] = useState("");
   const [chooserOpen, setChooserOpen] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editAuthor, setEditAuthor] = useState("");
+  const [editCourse, setEditCourse] = useState("");
+  const [editYear, setEditYear] = useState("");
+  const [editDepartment, setEditDepartment] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -45,6 +53,16 @@ const ThesisDetail = () => {
     load();
     return () => { active = false; };
   }, [id]);
+
+  useEffect(() => {
+    if (!thesis) return;
+    setEditTitle(thesis.title || "");
+    setEditAuthor(thesis.author || "");
+    setEditCourse(thesis.course || "");
+    setEditYear(thesis.yearPublished ? String(thesis.yearPublished) : "");
+    setEditDepartment(thesis.department || "");
+    setEditDescription(thesis.description || "");
+  }, [thesis]);
 
   useEffect(() => {
     return () => {
@@ -140,6 +158,55 @@ const ThesisDetail = () => {
     return Array.isArray(thesis.upvoters) && thesis.upvoters.some((x) => String(x) === String(user._id));
   }, [thesis, user]);
 
+  const isOwner = useMemo(() => {
+    if (!thesis || !user?._id) return false;
+    const up = thesis.uploadedBy;
+    if (!up) return false;
+    if (typeof up === "string") return String(up) === String(user._id);
+    return String(up._id || up.id) === String(user._id);
+  }, [thesis, user]);
+
+  const saveEdits = async (e) => {
+    e.preventDefault();
+    if (!thesis || !isOwner) return;
+    setSaving(true);
+    setSaveError("");
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`http://localhost:3000/api/upload/${thesis._id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : undefined,
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          title: editTitle,
+          yearPublished: editYear ? Number(editYear) : null,
+          description: editDescription,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Failed to save changes");
+      }
+      const updated = await res.json();
+      setThesis((prev) => {
+        if (!prev) return updated;
+        return {
+          ...prev,
+          ...updated,
+          uploadedBy: prev.uploadedBy || updated.uploadedBy,
+        };
+      });
+      toast.success("Thesis updated");
+    } catch (err) {
+      setSaveError(err.message || "Failed to save changes");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const hasDownvoted = useMemo(() => {
     if (!thesis || !user?._id) return false;
     return Array.isArray(thesis.downvoters) && thesis.downvoters.some((x) => String(x) === String(user._id));
@@ -159,7 +226,14 @@ const ThesisDetail = () => {
         body: JSON.stringify({ type }),
       });
       const data = await res.json();
-      setThesis(data);
+      setThesis((prev) => {
+        if (!prev) return data;
+        return {
+          ...prev,
+          ...data,
+          uploadedBy: prev.uploadedBy || data.uploadedBy,
+        };
+      });
     } catch (e) {
       // noop
     }
@@ -372,6 +446,16 @@ const ThesisDetail = () => {
                   <BarChart3 className="w-4 h-4" />
                   <span>Insights</span>
                 </button>
+                {isOwner && (
+                  <button
+                    role="tab"
+                    aria-selected={activeTab === "edit"}
+                    onClick={() => setActiveTab("edit")}
+                    className={`py-2 flex items-center gap-1 ${activeTab === "edit" ? "border-b-2 border-primary text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+                  >
+                    <span>Edit</span>
+                  </button>
+                )}
               </div>
 
               {/* Main two-column layout */}
@@ -441,6 +525,92 @@ const ThesisDetail = () => {
                         <li><span className="text-gray-500">Created:</span> {thesis?.createdAt ? new Date(thesis.createdAt).toLocaleString() : "—"}</li>
                         <li><span className="text-gray-500">Format:</span> {thesis?.format || thesis?.resourceType || "—"}</li>
                       </ul>
+                    </div>
+                  )}
+
+                  {activeTab === "edit" && isOwner && (
+                    <div className="p-4 bg-white border border-gray-200 rounded-lg space-y-3">
+                      <div className="text-sm text-gray-500">Edit thesis</div>
+                      {saveError && (
+                        <div className="text-xs text-red-600">{saveError}</div>
+                      )}
+                      <form className="space-y-3" onSubmit={saveEdits}>
+                        <div className="space-y-1">
+                          <label className="text-xs text-gray-500">Title</label>
+                          <input
+                            className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
+                            value={editTitle}
+                            onChange={(e) => setEditTitle(e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs text-gray-500">Author (locked)</label>
+                          <input
+                            className="w-full rounded border border-gray-200 px-2 py-1.5 text-sm bg-gray-50 text-gray-600 cursor-not-allowed"
+                            value={editAuthor}
+                            readOnly
+                          />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          <div className="space-y-1">
+                            <label className="text-xs text-gray-500">Course (locked)</label>
+                            <input
+                              className="w-full rounded border border-gray-200 px-2 py-1.5 text-sm bg-gray-50 text-gray-600 cursor-not-allowed"
+                              value={editCourse}
+                              readOnly
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs text-gray-500">Year</label>
+                            <input
+                              className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
+                              value={editYear}
+                              onChange={(e) => setEditYear(e.target.value.replace(/[^0-9]/g, ""))}
+                              maxLength={4}
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs text-gray-500">Department code (locked)</label>
+                            <input
+                              className="w-full rounded border border-gray-200 px-2 py-1.5 text-sm uppercase bg-gray-50 text-gray-600 cursor-not-allowed"
+                              value={editDepartment}
+                              readOnly
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs text-gray-500">Description</label>
+                          <textarea
+                            className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm min-h-[120px]"
+                            value={editDescription}
+                            onChange={(e) => setEditDescription(e.target.value)}
+                          />
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <button
+                            type="button"
+                            className="px-3 py-1.5 rounded border border-gray-300 text-sm text-gray-700 bg-white hover:bg-gray-50"
+                            onClick={() => {
+                              setEditTitle(thesis?.title || "");
+                              setEditAuthor(thesis?.author || "");
+                              setEditCourse(thesis?.course || "");
+                              setEditYear(thesis?.yearPublished ? String(thesis.yearPublished) : "");
+                              setEditDepartment(thesis?.department || "");
+                              setEditDescription(thesis?.description || "");
+                              setSaveError("");
+                            }}
+                          >
+                            Reset
+                          </button>
+                          <button
+                            type="submit"
+                            disabled={saving}
+                            className="px-3 py-1.5 rounded bg-primary text-white text-sm hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {saving ? "Saving..." : "Save changes"}
+                          </button>
+                        </div>
+                      </form>
                     </div>
                   )}
                 </div>

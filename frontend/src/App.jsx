@@ -77,7 +77,31 @@ function App() {
 
   return (
     <>
-      <Toaster position="top-right" />
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          style: {
+            background: "#111827", // near-gray background
+            color: "#F9FAFB",      // near-white text
+            borderRadius: "0.5rem",
+            border: "1px solid #E5E7EB",
+            fontSize: "0.875rem",
+            padding: "0.5rem 0.75rem",
+          },
+          success: {
+            iconTheme: {
+              primary: "#2563EB",   // primary blue
+              secondary: "#EFF6FF", // light blue bg
+            },
+          },
+          error: {
+            style: {
+              background: "#FEE2E2",
+              color: "#991B1B",
+            },
+          },
+        }}
+      />
       {user && user.isBanned && <BannedOverlay />}
       <Routes>
         {/* 🧍 Regular Users */}
@@ -174,8 +198,6 @@ function App() {
         <Route path="/login" element={<AuthLayout><RedirectAuthenticatedUser><LoginPage /></RedirectAuthenticatedUser></AuthLayout>} />
         <Route path="/verify-email" element={<AuthLayout><EmailVerificationPage /></AuthLayout>} />
       </Routes>
-
-      <Toaster />
     </>
   );
 }

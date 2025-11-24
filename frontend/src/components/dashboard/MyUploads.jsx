@@ -4,7 +4,7 @@ import { Eye, Edit3, Trash2, Save, X as IconX, FileText, Image as ImageIcon, Fil
 
 const MyUploads = ({ myFiles = [], onChanged }) => {
   const [editingId, setEditingId] = useState(null);
-  const [form, setForm] = useState({ title: "", author: "", course: "", yearPublished: "", department: "" });
+  const [form, setForm] = useState({ title: "", yearPublished: "", description: "" });
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("");
   const [confirmId, setConfirmId] = useState(null);
@@ -62,10 +62,8 @@ const MyUploads = ({ myFiles = [], onChanged }) => {
     setEditingId(f._id);
     setForm({
       title: f.title || "",
-      author: f.author || "",
-      course: f.course || "",
       yearPublished: f.yearPublished || "",
-      department: f.department || "",
+      description: f.description || "",
     });
   };
 
@@ -75,7 +73,11 @@ const MyUploads = ({ myFiles = [], onChanged }) => {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Authorization: token ? `Bearer ${token}` : undefined },
         credentials: "include",
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          title: form.title,
+          yearPublished: form.yearPublished,
+          description: form.description,
+        }),
       });
       setEditingId(null);
       onChanged && onChanged();
@@ -141,7 +143,12 @@ const MyUploads = ({ myFiles = [], onChanged }) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.18 }}
     >
-      <h3 className="text-lg font-semibold mb-3">My Uploads</h3>
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900">My Uploads</h3>
+          <p className="text-xs text-gray-500">Manage the theses you have submitted.</p>
+        </div>
+      </div>
       <div className="mb-3 flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
           <input
@@ -163,7 +170,13 @@ const MyUploads = ({ myFiles = [], onChanged }) => {
         </div>
       </div>
 
-      <div className="md:hidden grid grid-cols-1 gap-3">
+      {filtered.length === 0 && (
+        <div className="py-6 text-center text-sm text-gray-500 border border-dashed border-gray-200 rounded-lg bg-gray-50">
+          You have no uploads yet.
+        </div>
+      )}
+
+      <div className="md:hidden grid grid-cols-1 gap-3 mt-2">
         {filtered.map((f) => (
           <div key={f._id} className="p-4 rounded-lg border border-gray-200 bg-white">
             <div className="flex items-start justify-between gap-3">
@@ -205,12 +218,54 @@ const MyUploads = ({ myFiles = [], onChanged }) => {
             </div>
 
             {editingId === f._id && (
-              <div className="grid grid-cols-1 gap-2 mt-3">
-                <input className="p-2 rounded bg-white border border-gray-300 text-gray-900" placeholder="Title" value={form.title} onChange={(e)=>setForm({...form,title:e.target.value})} />
-                <input className="p-2 rounded bg-white border border-gray-300 text-gray-900" placeholder="Author" value={form.author} onChange={(e)=>setForm({...form,author:e.target.value})} />
-                <input className="p-2 rounded bg-white border border-gray-300 text-gray-900" placeholder="Course" value={form.course} onChange={(e)=>setForm({...form,course:e.target.value})} />
-                <input className="p-2 rounded bg-white border border-gray-300 text-gray-900" placeholder="Year" type="number" value={form.yearPublished} onChange={(e)=>setForm({...form,yearPublished:e.target.value})} />
-                <input className="p-2 rounded bg-white border border-gray-300 text-gray-900" placeholder="Department code (e.g., BSCS)" value={form.department} onChange={(e)=>setForm({...form,department:e.target.value})} />
+              <div className="grid grid-cols-1 gap-2 mt-3 text-sm">
+                <input
+                  className="p-2 rounded bg-white border border-gray-300 text-gray-900"
+                  placeholder="Title"
+                  value={form.title}
+                  onChange={(e)=>setForm({...form,title:e.target.value})}
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <div className="text-xs text-gray-500 mb-0.5">Year</div>
+                    <input
+                      className="p-2 rounded bg-white border border-gray-300 text-gray-900"
+                      placeholder="Year"
+                      type="number"
+                      value={form.yearPublished}
+                      onChange={(e)=>setForm({...form,yearPublished:e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-500 mb-0.5">Author (locked)</div>
+                    <div className="p-2 rounded bg-gray-50 border border-gray-200 text-gray-600 text-xs">
+                      {f.author || "—"}
+                    </div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <div className="text-xs text-gray-500 mb-0.5">Course (locked)</div>
+                    <div className="p-2 rounded bg-gray-50 border border-gray-200 text-gray-600 text-xs">
+                      {f.course || "—"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-500 mb-0.5">Department code (locked)</div>
+                    <div className="p-2 rounded bg-gray-50 border border-gray-200 text-gray-600 text-xs">
+                      {f.department || "—"}
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500 mb-0.5">Description</div>
+                  <textarea
+                    className="w-full p-2 rounded bg-white border border-gray-300 text-gray-900 min-h-[80px]"
+                    placeholder="Description"
+                    value={form.description}
+                    onChange={(e)=>setForm({...form,description:e.target.value})}
+                  />
+                </div>
               </div>
             )}
           </div>
@@ -232,12 +287,50 @@ const MyUploads = ({ myFiles = [], onChanged }) => {
               <tr key={f._id} className="border-b border-gray-100 hover:bg-gray-50">
                 <td className="py-2 pr-4 align-top">
                   {editingId === f._id ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                      <input className="p-2 rounded bg-white border border-gray-300 text-gray-900" placeholder="Title" value={form.title} onChange={(e)=>setForm({...form,title:e.target.value})} />
-                      <input className="p-2 rounded bg-white border border-gray-300 text-gray-900" placeholder="Author" value={form.author} onChange={(e)=>setForm({...form,author:e.target.value})} />
-                      <input className="p-2 rounded bg-white border border-gray-300 text-gray-900" placeholder="Course" value={form.course} onChange={(e)=>setForm({...form,course:e.target.value})} />
-                      <input className="p-2 rounded bg-white border border-gray-300 text-gray-900" placeholder="Year" type="number" value={form.yearPublished} onChange={(e)=>setForm({...form,yearPublished:e.target.value})} />
-                      <input className="p-2 rounded bg-white border border-gray-300 text-gray-900 md:col-span-2" placeholder="Department code (e.g., BSCS)" value={form.department} onChange={(e)=>setForm({...form,department:e.target.value})} />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                      <input
+                        className="p-2 rounded bg-white border border-gray-300 text-gray-900"
+                        placeholder="Title"
+                        value={form.title}
+                        onChange={(e)=>setForm({...form,title:e.target.value})}
+                      />
+                      <div>
+                        <div className="text-xs text-gray-500 mb-0.5">Year</div>
+                        <input
+                          className="p-2 rounded bg-white border border-gray-300 text-gray-900"
+                          placeholder="Year"
+                          type="number"
+                          value={form.yearPublished}
+                          onChange={(e)=>setForm({...form,yearPublished:e.target.value})}
+                        />
+                      </div>
+                      <div>
+                        <div className="text-xs text-gray-500 mb-0.5">Author (locked)</div>
+                        <div className="p-2 rounded bg-gray-50 border border-gray-200 text-gray-600 text-xs">
+                          {f.author || "—"}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-gray-500 mb-0.5">Course (locked)</div>
+                        <div className="p-2 rounded bg-gray-50 border border-gray-200 text-gray-600 text-xs">
+                          {f.course || "—"}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-gray-500 mb-0.5">Department code (locked)</div>
+                        <div className="p-2 rounded bg-gray-50 border border-gray-200 text-gray-600 text-xs">
+                          {f.department || "—"}
+                        </div>
+                      </div>
+                      <div className="md:col-span-2">
+                        <div className="text-xs text-gray-500 mb-0.5">Description</div>
+                        <textarea
+                          className="w-full p-2 rounded bg-white border border-gray-300 text-gray-900 min-h-[80px]"
+                          placeholder="Description"
+                          value={form.description}
+                          onChange={(e)=>setForm({...form,description:e.target.value})}
+                        />
+                      </div>
                     </div>
                   ) : (
                     <div>
@@ -297,8 +390,8 @@ const MyUploads = ({ myFiles = [], onChanged }) => {
       {confirmId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
           <div className="w-full max-w-sm rounded-lg border border-gray-200 bg-white p-5">
-            <div className="text-lg font-semibold mb-2 text-gray-900">Delete upload?</div>
-            <div className="text-sm text-gray-500 mb-4">This action cannot be undone.</div>
+            <div className="text-lg font-semibold mb-2 text-gray-900">Move to trash?</div>
+            <div className="text-sm text-gray-500 mb-4">This upload will be moved to trash and automatically deleted after 24 hours.</div>
             <div className="flex justify-end gap-2">
               <button onClick={() => setConfirmId(null)} className="px-3 py-1.5 rounded bg-gray-100 hover:bg-gray-200 text-sm text-gray-900">Cancel</button>
               <button onClick={() => deleteItem(confirmId)} className="px-3 py-1.5 rounded bg-red-600 hover:bg-red-500 text-sm text-white">Delete</button>

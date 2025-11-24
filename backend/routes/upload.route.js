@@ -170,37 +170,28 @@ router.patch("/:id", verifyToken, async (req, res) => {
   }
 });
 
-// ✅ Delete own upload (permanent: Cloudinary + MongoDB)
+// ✅ Delete own upload (soft delete: move to trash, auto-purged after 24h by scheduler)
 router.delete("/:id", verifyToken, async (req, res) => {
   try {
     const file = await File.findById(req.params.id);
     if (!file) return res.status(404).json({ message: "Not found" });
     if (String(file.uploadedBy) !== String(req.user._id)) return res.status(403).json({ message: "Forbidden" });
 
-    // Delete from Cloudinary if we have a publicId
-    if (file.publicId) {
-      try {
-        await cloudinary.uploader.destroy(file.publicId, { resource_type: file.resourceType || "raw" });
-      } catch (e) {
-        // proceed even if cloud deletion fails, but report
-        console.warn("Cloudinary destroy failed", e?.message || e);
-      }
-    }
+    file.trashed = true;
+    file.trashedAt = new Date();
+    file.trashReason = "deleted";
+    await file.save();
 
-    // Delete from MongoDB
-    await File.findByIdAndDelete(req.params.id);
-
-    // Log
     await ActivityLog.create({
       actor: req.user._id,
-      action: "DELETE_THESIS",
+      action: "TRASH_OWN_THESIS",
       details: { fileId: req.params.id, title: file.title },
     });
 
-    res.json({ message: "Deleted from Cloudinary and database" });
+    res.json({ message: "Moved to trash; will be permanently deleted after 24 hours" });
   } catch (err) {
-    console.error("Permanent delete failed", err);
-    res.status(500).json({ message: "Failed to delete file" });
+    console.error("Soft delete failed", err);
+    res.status(500).json({ message: "Failed to move file to trash" });
   }
 });
 
