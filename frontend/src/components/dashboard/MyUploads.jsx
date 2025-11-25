@@ -1,8 +1,9 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import { Eye, Edit3, Trash2, Save, X as IconX, FileText, Image as ImageIcon, File as FileIcon } from "lucide-react";
 
-const MyUploads = ({ myFiles = [], onChanged }) => {
+const MyUploads = ({ myFiles = [], onChanged, title = "My Uploads", hideSearch = false, disableInlineEdit = false, useListLayout = false, hideHeader = false }) => {
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({ title: "", yearPublished: "", description: "" });
   const [query, setQuery] = useState("");
@@ -111,6 +112,20 @@ const MyUploads = ({ myFiles = [], onChanged }) => {
       });
   }, [myFiles, query, status]);
 
+  // Dedupe by id to avoid accidental duplicates
+  const items = useMemo(() => {
+    const seen = new Set();
+    const out = [];
+    for (const f of filtered) {
+      const id = String(f?._id || f?.id || f?.publicId || f?.url || Math.random());
+      if (!seen.has(id)) {
+        seen.add(id);
+        out.push(f);
+      }
+    }
+    return out;
+  }, [filtered]);
+
   const timeLeft = (f) => {
     if (!f.trashedAt) return null;
     const now = Date.now();
@@ -143,20 +158,24 @@ const MyUploads = ({ myFiles = [], onChanged }) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.18 }}
     >
-      <div className="flex items-center justify-between gap-2 mb-3">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">My Uploads</h3>
-          <p className="text-xs text-gray-500">Manage the theses you have submitted.</p>
+      {!hideHeader && (
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+            <p className="text-xs text-gray-500">Manage the theses you have submitted.</p>
+          </div>
         </div>
-      </div>
+      )}
       <div className="mb-3 flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
-          <input
-            className="p-2 rounded bg-white border border-gray-300 text-sm text-gray-900 placeholder:text-gray-400"
-            placeholder="Search uploads"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
+          {!hideSearch && (
+            <input
+              className="p-2 rounded bg-white border border-gray-300 text-sm text-gray-900 placeholder:text-gray-400"
+              placeholder="Search uploads"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          )}
           <select
             className="p-2 rounded bg-white border border-gray-300 text-sm text-gray-900"
             value={status}
@@ -176,102 +195,146 @@ const MyUploads = ({ myFiles = [], onChanged }) => {
         </div>
       )}
 
-      <div className="md:hidden grid grid-cols-1 gap-3 mt-2">
-        {filtered.map((f) => (
-          <div key={f._id} className="p-4 rounded-lg border border-gray-200 bg-white">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Badge f={f} />
-                  <span className={`px-2 py-0.5 rounded text-[10px] ${
-                    f.status === 'approved' ? 'bg-primary/10 text-primary' :
-                    f.status === 'rejected' ? 'bg-red-100 text-red-700' :
-                    'bg-yellow-100 text-yellow-700'
-                  }`}>{f.status}</span>
-                  {f.trashed && (
-                    <span className="px-2 py-0.5 rounded text-[10px] bg-gray-100 text-gray-700 border border-gray-200">
-                      In Trash • {timeLeft(f) || 'auto-deletes in 1 day'}
-                    </span>
+      {useListLayout ? (
+        <div className="rounded-lg border border-gray-200 overflow-hidden">
+          {items.map((f, idx) => (
+            <div key={f._id || idx} className="px-4 py-3 border-b last:border-b-0 bg-white hover:bg-gray-50">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Link to={`/thesis/${f._id}`} className="font-medium text-gray-900 hover:underline truncate max-w-[48ch]">{f.title || 'Untitled'}</Link>
+                    <Badge f={f} />
+                    <span className={`px-2 py-0.5 rounded text-[10px] ${
+                      f.status === 'approved' ? 'bg-primary/10 text-primary' :
+                      f.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                      'bg-yellow-100 text-yellow-700'
+                    }`}>{f.status}</span>
+                    {f.trashed && (
+                      <span className="px-2 py-0.5 rounded text-[10px] bg-gray-100 text-gray-700 border border-gray-200">
+                        In Trash • {timeLeft(f) || 'auto-deletes in 1 day'}
+                      </span>
+                    )}
+                  </div>
+                  {f.description && (
+                    <div className="text-sm text-gray-700 mt-0.5 line-clamp-2">{f.description}</div>
+                  )}
+                  <div className="text-[11px] text-gray-500 mt-1 truncate">
+                    {f.filename || '—'}{f.createdAt ? ` • Updated ${new Date(f.createdAt).toLocaleDateString()}` : ''}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  {f._id && (
+                    <button onClick={() => openPreview(f)} className="p-2 rounded bg-gray-100 hover:bg-gray-200 text-gray-900" title="Preview">
+                      <Eye size={16} />
+                    </button>
+                  )}
+                  {!disableInlineEdit && editingId === f._id ? (
+                    <>
+                      <button onClick={saveEdit} className="p-2 rounded bg-primary hover:brightness-110 text-white"><Save size={16} /></button>
+                      <button onClick={()=>setEditingId(null)} className="p-2 rounded bg-gray-100 hover:bg-gray-200 text-gray-900"><IconX size={16} /></button>
+                    </>
+                  ) : (
+                    <>
+                      {!disableInlineEdit && (
+                        <button onClick={()=>startEdit(f)} className="p-2 rounded bg-gray-100 hover:bg-gray-200 text-gray-900"><Edit3 size={16} /></button>
+                      )}
+                      <button onClick={()=>setConfirmId(f._id)} className="p-2 rounded bg-red-600 hover:bg-red-500 text-white"><Trash2 size={16} /></button>
+                    </>
                   )}
                 </div>
-                <div className="font-medium text-gray-900 mt-1 truncate">{f.title}</div>
-                <div className="text-xs text-gray-500 truncate">{f.author} • {f.filename}</div>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
-                {f._id && (
-                  <button onClick={() => openPreview(f)} className="p-2 rounded bg-gray-100 hover:bg-gray-200 text-gray-900">
-                    <Eye size={16} />
-                  </button>
-                )}
-                {editingId === f._id ? (
-                  <>
-                    <button onClick={saveEdit} className="p-2 rounded bg-primary hover:brightness-110 text-white"><Save size={16} /></button>
-                    <button onClick={()=>setEditingId(null)} className="p-2 rounded bg-gray-100 hover:bg-gray-200 text-gray-900"><IconX size={16} /></button>
-                  </>
-                ) : (
-                  <>
-                    <button onClick={()=>startEdit(f)} className="p-2 rounded bg-gray-100 hover:bg-gray-200 text-gray-900"><Edit3 size={16} /></button>
-                    <button onClick={()=>setConfirmId(f._id)} className="p-2 rounded bg-red-600 hover:bg-red-500 text-white"><Trash2 size={16} /></button>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {editingId === f._id && (
-              <div className="grid grid-cols-1 gap-2 mt-3 text-sm">
-                <input
-                  className="p-2 rounded bg-white border border-gray-300 text-gray-900"
-                  placeholder="Title"
-                  value={form.title}
-                  onChange={(e)=>setForm({...form,title:e.target.value})}
-                />
-                <div className="grid grid-cols-2 gap-2">
+              {!disableInlineEdit && editingId === f._id && (
+                <div className="grid grid-cols-1 gap-2 mt-3 text-sm">
+                  <input
+                    className="p-2 rounded bg-white border border-gray-300 text-gray-900"
+                    placeholder="Title"
+                    value={form.title}
+                    onChange={(e)=>setForm({...form,title:e.target.value})}
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <div className="text-xs text-gray-500 mb-0.5">Year</div>
+                      <input
+                        className="p-2 rounded bg-white border border-gray-300 text-gray-900"
+                        placeholder="Year"
+                        type="number"
+                        value={form.yearPublished}
+                        onChange={(e)=>setForm({...form,yearPublished:e.target.value})}
+                      />
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-500 mb-0.5">Author (locked)</div>
+                      <div className="p-2 rounded bg-gray-50 border border-gray-200 text-gray-600 text-xs">
+                        {f.author || '—'}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <div className="text-xs text-gray-500 mb-0.5">Course (locked)</div>
+                      <div className="p-2 rounded bg-gray-50 border border-gray-200 text-gray-600 text-xs">
+                        {f.course || '—'}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-500 mb-0.5">Department code (locked)</div>
+                      <div className="p-2 rounded bg-gray-50 border border-gray-200 text-gray-600 text-xs">
+                        {f.department || '—'}
+                      </div>
+                    </div>
+                  </div>
                   <div>
-                    <div className="text-xs text-gray-500 mb-0.5">Year</div>
-                    <input
-                      className="p-2 rounded bg-white border border-gray-300 text-gray-900"
-                      placeholder="Year"
-                      type="number"
-                      value={form.yearPublished}
-                      onChange={(e)=>setForm({...form,yearPublished:e.target.value})}
+                    <div className="text-xs text-gray-500 mb-0.5">Description</div>
+                    <textarea
+                      className="w-full p-2 rounded bg-white border border-gray-300 text-gray-900 min-h-[80px]"
+                      placeholder="Description"
+                      value={form.description}
+                      onChange={(e)=>setForm({...form,description:e.target.value})}
                     />
                   </div>
-                  <div>
-                    <div className="text-xs text-gray-500 mb-0.5">Author (locked)</div>
-                    <div className="p-2 rounded bg-gray-50 border border-gray-200 text-gray-600 text-xs">
-                      {f.author || "—"}
-                    </div>
-                  </div>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <div className="text-xs text-gray-500 mb-0.5">Course (locked)</div>
-                    <div className="p-2 rounded bg-gray-50 border border-gray-200 text-gray-600 text-xs">
-                      {f.course || "—"}
-                    </div>
+              )}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="md:hidden grid grid-cols-1 gap-3 mt-2">
+          {items.map((f) => (
+            <div key={f._id} className="p-4 rounded-lg border border-gray-200 bg-white hover:bg-gray-50">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Badge f={f} />
+                    <span className={`px-2 py-0.5 rounded text-[10px] ${
+                      f.status === 'approved' ? 'bg-primary/10 text-primary' :
+                      f.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                      'bg-yellow-100 text-yellow-700'
+                    }`}>{f.status}</span>
+                    {f.trashed && (
+                      <span className="px-2 py-0.5 rounded text-[10px] bg-gray-100 text-gray-700 border border-gray-200">
+                        In Trash • {timeLeft(f) || 'auto-deletes in 1 day'}
+                      </span>
+                    )}
                   </div>
-                  <div>
-                    <div className="text-xs text-gray-500 mb-0.5">Department code (locked)</div>
-                    <div className="p-2 rounded bg-gray-50 border border-gray-200 text-gray-600 text-xs">
-                      {f.department || "—"}
-                    </div>
+                  <div className="font-medium text-gray-900 mt-1 truncate">
+                    <Link to={`/thesis/${f._id}`} className="hover:underline">{f.title}</Link>
                   </div>
+                  <div className="text-xs text-gray-500 truncate">{f.author} • {f.filename}</div>
                 </div>
-                <div>
-                  <div className="text-xs text-gray-500 mb-0.5">Description</div>
-                  <textarea
-                    className="w-full p-2 rounded bg-white border border-gray-300 text-gray-900 min-h-[80px]"
-                    placeholder="Description"
-                    value={form.description}
-                    onChange={(e)=>setForm({...form,description:e.target.value})}
-                  />
+                <div className="flex items-center gap-2 shrink-0">
+                  {f._id && (
+                    <button onClick={() => openPreview(f)} className="p-2 rounded bg-gray-100 hover:bg-gray-200 text-gray-900">
+                      <Eye size={16} />
+                    </button>
+                  )}
                 </div>
               </div>
-            )}
-          </div>
-        ))}
-      </div>
+            </div>
+          ))}
+        </div>
+      )}
 
+      {!useListLayout && (
       <div className="hidden md:block overflow-x-auto">
         <table className="min-w-full text-sm">
           <thead className="text-left text-gray-500 border-b border-gray-200">
@@ -286,7 +349,7 @@ const MyUploads = ({ myFiles = [], onChanged }) => {
             {filtered.map((f) => (
               <tr key={f._id} className="border-b border-gray-100 hover:bg-gray-50">
                 <td className="py-2 pr-4 align-top">
-                  {editingId === f._id ? (
+                  {!disableInlineEdit && editingId === f._id ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                       <input
                         className="p-2 rounded bg-white border border-gray-300 text-gray-900"
@@ -336,7 +399,9 @@ const MyUploads = ({ myFiles = [], onChanged }) => {
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <Badge f={f} />
-                        <div className="font-medium text-gray-900">{f.title}</div>
+                        <div className="font-medium text-gray-900">
+                          <Link to={`/thesis/${f._id}`} className="hover:underline">{f.title}</Link>
+                        </div>
                         {f.trashed && (
                           <span className="px-2 py-0.5 rounded text-[10px] bg-gray-100 text-gray-700 border border-gray-200">
                             In Trash • {timeLeft(f) || 'auto-deletes in 1 day'}
@@ -368,14 +433,16 @@ const MyUploads = ({ myFiles = [], onChanged }) => {
                     {f._id && (
                       <button onClick={() => openPreview(f)} className="p-2 rounded bg-gray-100 hover:bg-gray-200 text-gray-900"><Eye size={16} /></button>
                     )}
-                    {editingId === f._id ? (
+                    {!disableInlineEdit && editingId === f._id ? (
                       <>
                         <button onClick={saveEdit} className="p-2 rounded bg-primary hover:brightness-110 text-white"><Save size={16} /></button>
                         <button onClick={()=>setEditingId(null)} className="p-2 rounded bg-gray-100 hover:bg-gray-200 text-gray-900"><IconX size={16} /></button>
                       </>
                     ) : (
                       <>
-                        <button onClick={()=>startEdit(f)} className="p-2 rounded bg-gray-100 hover:bg-gray-200 text-gray-900"><Edit3 size={16} /></button>
+                        {!disableInlineEdit && (
+                          <button onClick={()=>startEdit(f)} className="p-2 rounded bg-gray-100 hover:bg-gray-200 text-gray-900"><Edit3 size={16} /></button>
+                        )}
                         <button onClick={()=>setConfirmId(f._id)} className="p-2 rounded bg-red-600 hover:bg-red-500 text-white"><Trash2 size={16} /></button>
                       </>
                     )}
@@ -386,6 +453,7 @@ const MyUploads = ({ myFiles = [], onChanged }) => {
           </tbody>
         </table>
       </div>
+      )}
 
       {confirmId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">

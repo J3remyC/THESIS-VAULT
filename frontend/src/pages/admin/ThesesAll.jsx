@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { useLocation } from "react-router-dom";
+import VerifiedBadge from "../../components/VerifiedBadge";
 
 const ThesesAll = () => {
   const location = useLocation();
@@ -144,7 +145,7 @@ const ThesesAll = () => {
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="font-medium text-gray-900 line-clamp-2">{i.title}</div>
-                      <div className="text-xs text-gray-500">{i.uploadedBy?.name} <span className="text-gray-500">{i.uploadedBy?.email}</span></div>
+                      <div className="text-xs text-gray-500">{i.uploadedBy?.name} <VerifiedBadge isVerified={i.uploadedBy?.isVerified} size="xs" /> <span className="text-gray-500">{i.uploadedBy?.email}</span></div>
                     </div>
                     <span className={`px-2 py-0.5 rounded text-xs ${i.status==='approved'?'bg-primary/10 text-primary':i.status==='pending'?'bg-yellow-100 text-yellow-700':'bg-red-100 text-red-700'}`}>{i.status}</span>
                   </div>
@@ -171,7 +172,7 @@ const ThesesAll = () => {
               {!editing ? (
                 <>
                   <div className="text-lg font-medium text-gray-900">{selected.title}</div>
-                  <div className="text-xs text-gray-500">{selected.uploadedBy?.name} <span className="text-gray-500">{selected.uploadedBy?.email}</span></div>
+                  <div className="text-xs text-gray-500">{selected.uploadedBy?.name} <VerifiedBadge isVerified={selected.uploadedBy?.isVerified} size="xs" /> <span className="text-gray-500">{selected.uploadedBy?.email}</span></div>
                 </>
               ) : (
                 <div className="space-y-2">

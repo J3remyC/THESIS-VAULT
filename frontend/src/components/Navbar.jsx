@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { useAuthStore } from "../store/authStore";
 import { Link, useNavigate, useLocation } from "react-router-dom";
+import VerifiedBadge from "./VerifiedBadge";
 
 const Navbar = () => {
   const { user, logout } = useAuthStore();
@@ -139,7 +140,10 @@ const Navbar = () => {
             onClick={() => setOpen((v) => !v)}
             className="flex items-center gap-2 px-3 py-1.5 rounded-md border border-gray-300 bg-white text-gray-900 text-sm hover:bg-gray-50"
           >
-            <span className="truncate max-w-[160px]">{user?.name || "Account"}</span>
+            <span className="flex items-center gap-1 truncate max-w-[180px]">
+              <span className="truncate max-w-[160px]">{user?.name || "Account"}</span>
+              <VerifiedBadge isVerified={!!user?.isVerified} size="sm" />
+            </span>
             <ChevronDown size={16} />
           </button>
           {open && (

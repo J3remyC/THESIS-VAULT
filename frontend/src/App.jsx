@@ -27,6 +27,7 @@ import { useEffect } from "react"
 import LoadingSpinner from "./components/LoadingSpinner"
 import AccountSettings from "./pages/AccountSettings"
 import BannedOverlay from "./components/BannedOverlay"
+import MyRepositories from "./pages/MyRepositories"
 
 // ✅ PROTECTED ROUTE COMPONENT
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -127,6 +128,14 @@ function App() {
             <ProtectedRoute allowedRoles={["guest", "student", "admin", "superadmin"]}>
               <AccountSettings />
             </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/my-repositories"
+          element={
+            <SoftProtectedRoute allowedRoles={["guest", "student"]}>
+              <MyRepositories />
+            </SoftProtectedRoute>
           }
         />
         <Route

@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
+import VerifiedBadge from "../VerifiedBadge";
+
 const ProfileInfo = ({ user }) => {
   const [approvedApp, setApprovedApp] = useState(null);
   const [uploadsCount, setUploadsCount] = useState(0);
@@ -60,6 +62,7 @@ const ProfileInfo = ({ user }) => {
         <div className="flex-1 min-w-0">
           <div className="flex items-center flex-wrap gap-2">
             <h3 className="text-lg font-semibold text-gray-900 truncate">{fullName || '—'}</h3>
+            <VerifiedBadge isVerified={!!(user?.isVerified || approvedApp)} size="sm" />
             {role === 'student' && (
               <span className="px-2 py-0.5 rounded text-xs bg-primary/10 text-primary">Student</span>
             )}

@@ -118,7 +118,7 @@ router.post("/:id/vote", verifyToken, async (req, res) => {
 router.get("/", async (req, res) => {
   try {
     const files = await File.find({ status: "approved" })
-      .populate("uploadedBy", "name email")
+      .populate("uploadedBy", "name email isVerified")
       .sort({ createdAt: -1 });
     res.status(200).json(files);
   } catch (err) {
@@ -130,7 +130,7 @@ router.get("/", async (req, res) => {
 router.get("/mine", verifyToken, async (req, res) => {
   try {
     const files = await File.find({ uploadedBy: req.user._id })
-      .populate("uploadedBy", "name email")
+      .populate("uploadedBy", "name email isVerified")
       .sort({ createdAt: -1 });
     res.status(200).json(files);
   } catch (err) {
@@ -167,6 +167,62 @@ router.patch("/:id", verifyToken, async (req, res) => {
     res.json(updated);
   } catch (err) {
     res.status(500).json({ message: "Failed to update file" });
+  }
+});
+
+// ✅ Replace own uploaded file (content)
+router.post("/:id/replace", verifyToken, upload.single("file"), async (req, res) => {
+  try {
+    const file = await File.findById(req.params.id);
+    if (!file) return res.status(404).json({ message: "Not found" });
+    if (String(file.uploadedBy) !== String(req.user._id)) return res.status(403).json({ message: "Forbidden" });
+
+    if (!req.file) return res.status(400).json({ message: "No file uploaded" });
+
+    // Decide resource type based on mimetype
+    const mime = (req.file.mimetype || "").toLowerCase();
+    let resourceType = "raw";
+    if (mime.startsWith("image/")) resourceType = "image";
+    else if (mime.startsWith("video/")) resourceType = "video";
+    else resourceType = "raw"; // pdf, docx, etc.
+
+    // Upload new file to Cloudinary
+    const fileBase64 = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
+    const result = await cloudinary.uploader.upload(fileBase64, {
+      folder: "uploads",
+      resource_type: resourceType,
+      use_filename: true,
+      unique_filename: false,
+      filename_override: req.file.originalname,
+    });
+
+    // Best-effort delete old resource, if any
+    try {
+      if (file.publicId) {
+        await cloudinary.uploader.destroy(file.publicId, {
+          resource_type: file.resourceType || "raw",
+        });
+      }
+    } catch {}
+
+    // Update file document
+    file.url = result.secure_url;
+    file.filename = req.file.originalname;
+    file.publicId = result.public_id;
+    file.resourceType = result.resource_type;
+    file.format = result.format;
+    await file.save();
+
+    await ActivityLog.create({
+      actor: req.user._id,
+      action: "REPLACE_THESIS_FILE",
+      details: { fileId: file._id, filename: file.filename },
+    });
+
+    res.json(file);
+  } catch (err) {
+    console.error("Replace file failed", err);
+    res.status(500).json({ message: "Failed to replace file" });
   }
 });
 

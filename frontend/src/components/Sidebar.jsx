@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Folder, Upload, Home } from "lucide-react";
+import { Folder, Upload, User, LayoutDashboard, BookOpen } from "lucide-react";
 
 const NavItem = ({ icon: Icon, label, to = "#" }) => (
   <Link
@@ -19,10 +19,9 @@ const Sidebar = () => {
         <div className="text-xs uppercase tracking-wide text-gray-500 mb-2">Dashboard</div>
         <div className="rounded-lg border border-gray-200 bg-white">
           <nav className="p-2 space-y-1">
-            <NavItem icon={Home} label="Overview" to="/" />
-            <NavItem icon={Home} label="Profile" to="/profile" />
+            <NavItem icon={LayoutDashboard} label="Overview" to="/" />
+            <NavItem icon={User} label="Profile" to="/profile" />
             <NavItem icon={Upload} label="Uploads" to="/upload" />
-            <NavItem icon={Folder} label="Repositories" to="/theses" />
           </nav>
         </div>
       </div>
@@ -30,8 +29,8 @@ const Sidebar = () => {
         <div className="text-xs uppercase tracking-wide text-gray-500 mb-2">Thesis</div>
         <div className="rounded-lg border border-gray-200 bg-white">
           <nav className="p-2 space-y-1">
-            <NavItem icon={Folder} label="All Theses" to="/theses" />
-            <NavItem icon={Folder} label="Other Departments" to="/theses?tab=other" />
+            <NavItem icon={BookOpen} label="All Theses" to="/theses" />
+            <NavItem icon={Folder} label="My repositories" to="/my-repositories" />
           </nav>
         </div>
       </div>

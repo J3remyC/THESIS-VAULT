@@ -5,6 +5,7 @@ import Sidebar from "../components/Sidebar";
 import { useAuthStore } from "../store/authStore";
 import { ArrowLeft, ExternalLink, Download as DownloadIcon, Home, Folder, BookOpen, Files as FilesIcon, BarChart3, Copy } from "lucide-react";
 import { toast } from "react-hot-toast";
+import VerifiedBadge from "../components/VerifiedBadge";
 
 const ThesisDetail = () => {
   const { id } = useParams();
@@ -29,6 +30,9 @@ const ThesisDetail = () => {
   const [editDescription, setEditDescription] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const [newFile, setNewFile] = useState(null);
+  const [replacing, setReplacing] = useState(false);
+  const [replaceError, setReplaceError] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -39,7 +43,21 @@ const ThesisDetail = () => {
         const res = await fetch("http://localhost:3000/api/upload");
         const data = await res.json();
         if (!Array.isArray(data)) throw new Error("Unexpected response");
-        const found = data.find((f) => String(f._id) === String(id));
+        let found = data.find((f) => String(f._id) === String(id));
+        // Fallback: if not in approved list, try user's own uploads
+        if (!found) {
+          try {
+            const token = localStorage.getItem("token");
+            const resMine = await fetch("http://localhost:3000/api/upload/mine", {
+              headers: { Authorization: token ? `Bearer ${token}` : undefined },
+              credentials: "include",
+            });
+            const dataMine = await resMine.json();
+            if (Array.isArray(dataMine)) {
+              found = dataMine.find((f) => String(f._id) === String(id));
+            }
+          } catch {}
+        }
         if (active) {
           if (!found) setError("Thesis not found or not approved.");
           setThesis(found || null);
@@ -145,6 +163,43 @@ const ThesisDetail = () => {
       }
     } finally {
       setPreviewLoading(false);
+    }
+  };
+
+  const replaceFile = async () => {
+    if (!thesis || !isOwner) return;
+    if (!newFile) {
+      setReplaceError("Please choose a file first.");
+      return;
+    }
+    setReplacing(true);
+    setReplaceError("");
+    try {
+      const token = localStorage.getItem("token");
+      const fd = new FormData();
+      fd.append("file", newFile);
+      const res = await fetch(`http://localhost:3000/api/upload/${thesis._id}/replace`, {
+        method: "POST",
+        headers: { Authorization: token ? `Bearer ${token}` : undefined },
+        credentials: "include",
+        body: fd,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Failed to replace file");
+      }
+      const updated = await res.json();
+      setThesis((prev) => ({
+        ...(prev || {}),
+        ...updated,
+        uploadedBy: (prev && prev.uploadedBy) || updated.uploadedBy,
+      }));
+      setNewFile(null);
+      toast.success("File replaced");
+    } catch (err) {
+      setReplaceError(err.message || "Failed to replace file");
+    } finally {
+      setReplacing(false);
     }
   };
 
@@ -472,7 +527,7 @@ const ThesisDetail = () => {
                           <div className="text-red-600">{error}</div>
                         ) : (
                           <div className="prose max-w-none">
-                            <p className="whitespace-pre-wrap">{thesis?.description || "No description provided."}</p>
+                            <p className="whitespace-pre-wrap break-words">{thesis?.description || "No description provided."}</p>
                           </div>
                         )}
                       </div>
@@ -521,7 +576,7 @@ const ThesisDetail = () => {
                         <li><span className="text-gray-500">Upvotes:</span> {thesis?.upvotes || 0}</li>
                         <li><span className="text-gray-500">Downvotes:</span> {thesis?.downvotes || 0}</li>
                         <li><span className="text-gray-500">Score:</span> {score}</li>
-                        <li><span className="text-gray-500">Uploaded by:</span> {thesis?.uploadedBy?.name || thesis?.uploadedBy?.email || "Unknown"}</li>
+                        <li><span className="text-gray-500">Uploaded by:</span> {thesis?.uploadedBy?.name || thesis?.uploadedBy?.email || "Unknown"} <VerifiedBadge isVerified={thesis?.uploadedBy?.isVerified} size="sm" /></li>
                         <li><span className="text-gray-500">Created:</span> {thesis?.createdAt ? new Date(thesis.createdAt).toLocaleString() : "—"}</li>
                         <li><span className="text-gray-500">Format:</span> {thesis?.format || thesis?.resourceType || "—"}</li>
                       </ul>
@@ -611,6 +666,28 @@ const ThesisDetail = () => {
                           </button>
                         </div>
                       </form>
+
+                      <div className="pt-3 mt-2 border-t border-gray-200">
+                        <div className="text-sm text-gray-500 mb-2">Replace file</div>
+                        {replaceError && <div className="text-xs text-red-600 mb-2">{replaceError}</div>}
+                        <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+                          <input
+                            type="file"
+                            accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,image/*,video/*,audio/*"
+                            onChange={(e) => setNewFile(e.target.files && e.target.files[0] ? e.target.files[0] : null)}
+                            className="block text-sm"
+                          />
+                          <button
+                            type="button"
+                            onClick={replaceFile}
+                            disabled={!newFile || replacing}
+                            className="px-3 py-1.5 rounded bg-primary text-white text-sm hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {replacing ? "Replacing..." : "Replace file"}
+                          </button>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">Current: {thesis?.filename || "—"}</div>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -640,7 +717,7 @@ const ThesisDetail = () => {
 
                   <div className="p-4 bg-white border border-gray-200 rounded-lg">
                     <div className="text-sm text-gray-500 mb-2">About</div>
-                    <div className="text-sm text-gray-700">Uploaded by: {thesis?.uploadedBy?.name || thesis?.uploadedBy?.email || "Unknown"}</div>
+                    <div className="text-sm text-gray-700">Uploaded by: {thesis?.uploadedBy?.name || thesis?.uploadedBy?.email || "Unknown"} <VerifiedBadge isVerified={thesis?.uploadedBy?.isVerified} size="sm" /></div>
                   </div>
                 </div>
               </div>

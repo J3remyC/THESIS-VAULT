@@ -38,7 +38,7 @@ const SignUpPage = () => {
           <Input 
           icon={User}
           type='text'
-          placeholder='Full Name'
+          placeholder='Username'
           value = {name}
           onChange={(e) => setName(e.target.value)}
           />

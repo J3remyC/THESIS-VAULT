@@ -30,7 +30,7 @@ router.get(
       if (department) query.department = department;
       if (status) query.status = status;
       const files = await File.find(query)
-        .populate("uploadedBy", "name email role")
+        .populate("uploadedBy", "name email role isVerified")
         .sort({ createdAt: -1 });
       res.json(files);
     } catch (e) {
@@ -119,7 +119,7 @@ router.get(
   async (req, res) => {
     try {
       const files = await File.find({})
-        .populate("uploadedBy", "name email role")
+        .populate("uploadedBy", "name email role isVerified")
         .sort({ createdAt: -1 });
       res.json(files);
     } catch (e) {
@@ -136,7 +136,7 @@ router.get(
   async (req, res) => {
     try {
       const files = await File.find({ status: "pending" })
-        .populate("uploadedBy", "name email role")
+        .populate("uploadedBy", "name email role isVerified")
         .sort({ createdAt: -1 });
       res.json(files);
     } catch (e) {

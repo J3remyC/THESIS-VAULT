@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
+import { useAuthStore } from "../store/authStore";
+import VerifiedBadge from "../components/VerifiedBadge";
 
 const AccountSettings = () => {
   const [form, setForm] = useState({
@@ -18,6 +20,7 @@ const AccountSettings = () => {
   const [message, setMessage] = useState("");
   const [myApps, setMyApps] = useState([]);
   const [approvedApp, setApprovedApp] = useState(null);
+  const { user } = useAuthStore();
 
   const headers = () => {
     const t = localStorage.getItem("token");
@@ -159,6 +162,18 @@ const AccountSettings = () => {
                 Fill out your student information for verification. Once approved by an admin, your role will be
                 upgraded to student.
               </p>
+            </div>
+
+            <div className="bg-white border border-gray-200 rounded-xl p-4">
+              <div className="flex items-center gap-3">
+                <div className="min-w-0">
+                  <div className="text-sm font-medium text-gray-900 flex items-center gap-1">
+                    <span className="truncate">{user?.name || user?.email || "Account"}</span>
+                    <VerifiedBadge isVerified={!!user?.isVerified} size="sm" />
+                  </div>
+                  <div className="text-xs text-gray-500 truncate">{user?.email}</div>
+                </div>
+              </div>
             </div>
 
             {/* FORM */}

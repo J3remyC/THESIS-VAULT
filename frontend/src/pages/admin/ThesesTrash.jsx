@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { X } from "lucide-react";
+import VerifiedBadge from "../../components/VerifiedBadge";
 
 const ThesesTrash = () => {
   const [items, setItems] = useState([]);
@@ -78,7 +79,7 @@ const ThesesTrash = () => {
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <div className="font-medium text-gray-900 line-clamp-2">{i.title}</div>
-                          <div className="text-xs text-gray-500">{i.uploadedBy?.name} <span className="text-gray-500">{i.uploadedBy?.email}</span></div>
+                          <div className="text-xs text-gray-500">{i.uploadedBy?.name} <VerifiedBadge isVerified={i.uploadedBy?.isVerified} size="xs" /> <span className="text-gray-500">{i.uploadedBy?.email}</span></div>
                           <div className="mt-1 text-xs text-gray-500">Trashed: {new Date(i.trashedAt).toLocaleString()} • {timeLeft(i.trashedAt)}</div>
                           {i.rejectionReason && <div className="text-xs text-red-700 mt-1">Reason: {i.rejectionReason}</div>}
                         </div>
@@ -103,7 +104,7 @@ const ThesesTrash = () => {
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <div className="font-medium text-gray-900 line-clamp-2">{i.title}</div>
-                          <div className="text-xs text-gray-500">{i.uploadedBy?.name} <span className="text-gray-500">{i.uploadedBy?.email}</span></div>
+                          <div className="text-xs text-gray-500">{i.uploadedBy?.name} <VerifiedBadge isVerified={i.uploadedBy?.isVerified} size="xs" /> <span className="text-gray-500">{i.uploadedBy?.email}</span></div>
                           <div className="mt-1 text-xs text-gray-500">Trashed: {new Date(i.trashedAt).toLocaleString()} • {timeLeft(i.trashedAt)}</div>
                         </div>
                         <span className="px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-700">deleted</span>
@@ -124,7 +125,7 @@ const ThesesTrash = () => {
                 </div>
                 <div className="mb-4">
                   <div className="text-lg font-medium text-gray-900">{selected.title}</div>
-                  <div className="text-xs text-gray-500">{selected.uploadedBy?.name} <span className="text-gray-500">{selected.uploadedBy?.email}</span></div>
+                  <div className="text-xs text-gray-500">{selected.uploadedBy?.name} <VerifiedBadge isVerified={selected.uploadedBy?.isVerified} size="xs" /> <span className="text-gray-500">{selected.uploadedBy?.email}</span></div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700">
                   <div>

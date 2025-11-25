@@ -82,18 +82,7 @@ const DashBoardPage = () => {
               <ProfileInfo user={user} />
             </div>
 
-            {/* Row 2 - My Uploads */}
-            {user.role !== "guest" && (
-              <div className="w-full bg-white border border-gray-200 p-6 rounded-xl shadow-md">
-                <MyUploads
-                  myFiles={myFiles}
-                  onChanged={() => {
-                    fetchMyFiles();
-                    fetchFiles();
-                  }}
-                />
-              </div>
-            )}
+            
 
             {/* Row 3 - Account Activity */}
             <div className="w-full bg-white border border-gray-200 p-6 rounded-xl shadow-md">
